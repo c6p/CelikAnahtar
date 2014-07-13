@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">Celik Anahtarı</string>
+    <string name="action_settings">Settings</string>
+    <string name="action_search">Search</string>
+
+    <string-array name="action_list">
+        <item>List Steels</item>
+        <!--<item>Search Composition</item>-->
+        <item>View Steel</item>
+    </string-array>
+
+    <string name="compo_minimum">Minimum</string>
+    <string name="compo_maximum">Maximum</string>
+    <string name="compo_value">Value</string>
+    <string name="compo_tolerance">Tolerance ±</string>
+    <string name="compo_element">Element</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+
+    <string-array name="elements">
+        <item>C</item>
+        <item>Si</item>
+        <item>Mn</item>
+        <item>P</item>
+        <item>S</item>
+        <item>Ag</item>
+        <item>Al</item>
+        <item>As</item>
+        <item>B</item>
+        <item>Ba</item>
+        <item>Be</item>
+        <item>Bi</item>
+        <item>Ca</item>
+        <item>Ce</item>
+        <item>Co</item>
+        <item>Cr</item>
+        <item>Cu</item>
+        <item>Fe</item>
+        <item>H</item>
+        <item>Hf</item>
+        <item>La</item>
+        <item>Mg</item>
+        <item>Mo</item>
+        <item>N</item>
+        <item>Nb</item>
+        <item>Ni</item>
+        <item>O</item>
+        <item>Pb</item>
+        <item>Pd</item>
+        <item>Re</item>
+        <item>Sb</item>
+        <item>Se</item>
+        <item>Sn</item>
+        <item>Ta</item>
+        <item>Te</item>
+        <item>Ti</item>
+        <item>V</item>
+        <item>W</item>
+        <item>Y</item>
+        <item>Zn</item>
+        <item>Zr</item>
+        <item>Cb</item>
+        <item>Nd</item>
+    </string-array>
+</resources>
