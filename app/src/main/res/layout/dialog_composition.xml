@@ -18,16 +18,15 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textAppearance="?android:attr/textAppearanceMedium"
-                android:text="@+string/compo_element"
+                android:text="@string/compo_element"
                 android:layout_column="0" />
 
             <Spinner
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:id="@+id/spinner"
+                android:id="@+id/compo_element"
                 android:layout_column="2"
-                android:layout_span="2"
-                android:entries="@array/elements"/>
+                android:layout_span="2"/>
         </TableRow>
 
         <TableRow
@@ -38,28 +37,16 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textAppearance="?android:attr/textAppearanceMedium"
-                android:text="@+string/compo_minimum"
+                android:text="@string/compo_minimum"
                 android:layout_column="0" />
 
         <EditText
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:inputType="number"
+                android:inputType="numberDecimal"
                 android:ems="10"
                 android:id="@+id/compo_minimum"
                 android:layout_column="2" />
-        </TableRow>
-
-        <TableRow
-            android:layout_width="fill_parent"
-            android:layout_height="fill_parent">
-
-            <SeekBar
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:id="@+id/compo_minimum_seekbar"
-                android:layout_column="0"
-                android:layout_span="3" />
         </TableRow>
 
         <TableRow
@@ -70,13 +57,13 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textAppearance="?android:attr/textAppearanceMedium"
-                android:text="@+string/compo_maximum"
+                android:text="@string/compo_maximum"
                 android:layout_column="0" />
 
             <EditText
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:inputType="number"
+                android:inputType="numberDecimal"
                 android:ems="10"
                 android:id="@+id/compo_maximum"
                 android:layout_column="2" />
@@ -86,29 +73,17 @@
             android:layout_width="fill_parent"
             android:layout_height="fill_parent" >
 
-            <SeekBar
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:id="@+id/compo_maximum_seekbar"
-                android:layout_column="0"
-                android:layout_span="3" />
-        </TableRow>
-
-    <TableRow
-            android:layout_width="fill_parent"
-            android:layout_height="fill_parent" >
-
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textAppearance="?android:attr/textAppearanceMedium"
-                android:text="@+string/compo_value"
+                android:text="@string/compo_value"
                 android:layout_column="0" />
 
             <EditText
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:inputType="number"
+                android:inputType="numberDecimal"
                 android:ems="10"
                 android:id="@+id/compo_value"
                 android:layout_column="2" />
@@ -118,46 +93,22 @@
             android:layout_width="fill_parent"
             android:layout_height="fill_parent" >
 
-            <SeekBar
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:id="@+id/compo_value_seekbar"
-                android:layout_column="0"
-                android:layout_span="3" />
-        </TableRow>
-
-        <TableRow
-            android:layout_width="fill_parent"
-            android:layout_height="fill_parent" >
-
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textAppearance="?android:attr/textAppearanceMedium"
-                android:text="@+string/compo_tolerance"
+                android:text="@string/compo_tolerance"
                 android:layout_column="0" />
 
             <EditText
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:inputType="number"
+                android:inputType="numberDecimal"
                 android:ems="10"
                 android:id="@+id/compo_tolerance"
                 android:layout_column="2" />
         </TableRow>
 
-    <TableRow
-            android:layout_width="fill_parent"
-            android:layout_height="fill_parent" >
-
-            <SeekBar
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:id="@+id/compo_tolerance_seekbar"
-                android:layout_column="0"
-                android:layout_span="3" />
-        </TableRow>
-
-</TableLayout>
+    </TableLayout>
 
 </RelativeLayout>

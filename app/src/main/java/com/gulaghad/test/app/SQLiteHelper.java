@@ -72,8 +72,64 @@ public class SQLiteHelper extends SQLiteAssetHelper {
         c.close();
         return Pair.create(end, Pair.create(steels, ids));
     }
+    public Pair<Integer, Pair< List<Pair<String, ArrayList<Element>>>, List<Integer> >>
+    fetchSteelComposition(int pos, int size, List<Element> filter) {
+        List<Pair<String, ArrayList<SQLiteHelper.Element>>> elements = new ArrayList<Pair<String, ArrayList<Element>>>();
+        List<Integer> ids = new ArrayList<Integer>();
+        int end = pos;
+        String q = "SELECT a.id_steel, name, an.id_element, id_min, id_max FROM analysesearch AS s"
+                + " LEFT JOIN analyse AS a ON s.id_analyse == a.id_analyse"
+                + " LEFT JOIN steelname AS sn ON a.id_steel == sn.id_steel"
+                + " LEFT JOIN analyseproperty AS an ON a.id_analyse == an.id_analyse"
+                + " LEFT JOIN element AS e ON an.id_element == e.id_element";
+        String joiner = " WHERE";
+        ArrayList<String> elemList = new ArrayList<String>();
+        for (SQLiteHelper.Element e : filter) {
+            q += joiner;
+            q += String.format(" %s_min <= ? AND %s_max >= ?",
+                    e.name, e.name);
+            joiner = " AND";
+            elemList.add(Float.toString(e.max));
+            elemList.add(Float.toString(e.min));
+        }
+        q += " GROUP BY s.id_analyse, an.id_element ORDER BY a.id_steel, e.sort";
+        Cursor c;
+        c = _db.rawQuery(q, (String[]) elemList.toArray(new String[elemList.size()]));
+        Log.i(LOG, q);
+        int counter = 0;
 
-    public class Element
+        int steel = 0;
+        ArrayList<Element> e = null;
+        String steelName = "";
+        if (c.moveToPosition(pos)) {
+            do {
+                // steel is different
+                if (steel != c.getInt(0)) {
+                    if (++counter >= size)   // do not fetch anymore, if reached max-size
+                        break;
+                    if (e != null) {   // is valid
+                        elements.add(Pair.create(steelName, e));
+                        ids.add(steel);
+                    }
+                    // next element
+                    steel = c.getInt(0);
+                    steelName = c.getString(1);
+                    e = new ArrayList<Element>();
+                }
+                e.add(new Element(c.getString(2), c.getFloat(3), c.getFloat(4)));
+            } while (c.moveToNext());
+            // merge last steel
+            if (e != null) {   // is valid
+                elements.add(Pair.create(steelName, e));
+                ids.add(steel);
+            }
+            end = c.getPosition();
+        }
+        c.close();
+        return Pair.create(end, Pair.create(elements, ids));
+    }
+
+    public static class Element
     {
         public final String name;
         public final float min;

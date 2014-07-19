@@ -12,13 +12,15 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ArrayAdapter;
 
+import java.util.List;
+
 import static android.support.v7.widget.SearchView.OnQueryTextListener;
 
 
 public class MainActivity extends ActionBarActivity {
 
     private int _navigationIndex=-1;
-    private static final int LIST_STEELS = 0, VIEW_STEEL = 1;
+    private static final int SEARCH_COMPOSITION = 0, LIST_STEELS = 1, SEARCH_RESULTS = 2, VIEW_STEEL = 3;
     private SQLiteHelper _db;
 
     @Override
@@ -45,11 +47,14 @@ public class MainActivity extends ActionBarActivity {
                         case LIST_STEELS:
                             type = RecentFragment.class.getName();
                             break;
-                        //case 1:
-                        //    type = SearchFragment.class.getName();
-                         //   break;
+                        case SEARCH_COMPOSITION:
+                            type = SearchFragment.class.getName();
+                            break;
                         case VIEW_STEEL:
                             type = SteelFragment.class.getName();
+                            break;
+                        case SEARCH_RESULTS:
+                            type = ResultFragment.class.getName();
                             break;
                     }
                     _activateFragment(type, new Bundle());
@@ -113,6 +118,15 @@ public class MainActivity extends ActionBarActivity {
         return fragment;
     }
 
+    public ResultFragment searchComposition(List<SQLiteHelper.Element> l) {
+        Bundle bundle = new Bundle();
+        ResultFragment fragment = (ResultFragment) _activateFragment(ResultFragment.class.getName(), bundle);
+        fragment.search(l, getDB());
+        _navigationIndex = SEARCH_RESULTS;
+        getSupportActionBar().setSelectedNavigationItem(SEARCH_RESULTS);
+        return fragment;
+    }
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.main, menu);
@@ -135,7 +149,7 @@ public class MainActivity extends ActionBarActivity {
                     Bundle bundle = new Bundle();
                     // TODO bundle search filter
                     RecentFragment fragment = (RecentFragment) _activateFragment(RecentFragment.class.getName(), bundle);
-                    fragment.search(s);
+                    fragment.search(s, getDB());
                     _navigationIndex = LIST_STEELS;
                     getSupportActionBar().setSelectedNavigationItem(LIST_STEELS);
                     return true;

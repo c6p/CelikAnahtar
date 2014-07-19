@@ -6,8 +6,9 @@
     <string name="action_search">Search</string>
 
     <string-array name="action_list">
+        <item>Search Composition</item>
         <item>List Steels</item>
-        <!--<item>Search Composition</item>-->
+        <item>Search Results</item>
         <item>View Steel</item>
     </string-array>
 
@@ -18,6 +19,9 @@
     <string name="compo_element">Element</string>
     <string name="ok">OK</string>
     <string name="cancel">Cancel</string>
+    <string name="compo_add">Add Element</string>
+    <string name="compo_remove">remove</string>
+    <string name="compo_search">Search</string>
 
     <string-array name="elements">
         <item>C</item>

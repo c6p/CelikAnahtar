@@ -22,6 +22,7 @@ public class SteelFragment extends Fragment {
     private int _steel;
     private MainActivity _context;
     private TabChangeListener _listener;
+    private AsyncTask<Integer, Void, String>[] _tasks = new AsyncTask[4];
 
     private static class TabChangeListener implements TabHost.OnTabChangeListener {
         private Map<String, String> _contents;
@@ -119,11 +120,21 @@ public class SteelFragment extends Fragment {
 
     private void fetchData() {
         _listener.initContent();
-        new FetchCompositionTask().execute(_steel);
-        new FetchMechanicalPropsTask().execute(_steel);
-        new FetchHeatTreatTask().execute(_steel);
-        new FetchPhysicalPropsTask().execute(_steel);
+        _tasks[0] = new FetchCompositionTask().execute(_steel);
+        _tasks[1] = new FetchMechanicalPropsTask().execute(_steel);
+        _tasks[2] = new FetchHeatTreatTask().execute(_steel);
+        _tasks[3] = new FetchPhysicalPropsTask().execute(_steel);
     }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        for (AsyncTask<Integer, Void, String> t : _tasks) {
+            if (t != null)
+                t.cancel(true);
+        }
+    }
+
     private class FetchCompositionTask extends AsyncTask<Integer, Void, String> {
         @Override
         protected String doInBackground(Integer... params) {
@@ -272,4 +283,5 @@ public class SteelFragment extends Fragment {
             _listener.loadContent(_tags[3], result);
         }
     }
+
 }

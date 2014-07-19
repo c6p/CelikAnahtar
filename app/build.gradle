@@ -1,9 +1,16 @@
 apply plugin: 'com.android.application'
 
 android {
+    signingConfigs {
+        celik {
+            keyAlias 'celik'
+            keyPassword 'celik'
+            storeFile file('/home/can/data/_keys/android/celik.keystore')
+            storePassword 'celik'
+        }
+    }
     compileSdkVersion 19
     buildToolsVersion '19.1.0'
-
     defaultConfig {
         applicationId "com.gulaghad.celik.app"
         minSdkVersion 7
