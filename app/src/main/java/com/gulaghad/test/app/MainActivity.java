@@ -20,7 +20,7 @@ import static android.support.v7.widget.SearchView.OnQueryTextListener;
 public class MainActivity extends ActionBarActivity {
 
     private int _navigationIndex=-1;
-    private static final int SEARCH_COMPOSITION = 0, LIST_STEELS = 1, SEARCH_RESULTS = 2, VIEW_STEEL = 3;
+    //private static final int SEARCH_COMPOSITION = 0, LIST_STEELS = 1, SEARCH_RESULTS = 2, VIEW_STEEL = 3;
     private SQLiteHelper _db;
 
     @Override
@@ -31,13 +31,13 @@ public class MainActivity extends ActionBarActivity {
 
         // setup action bar for tabs
         ActionBar actionBar = getSupportActionBar();
-        actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_LIST);
+        //actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_LIST);
         actionBar.setDisplayShowTitleEnabled(false);
 
-        ArrayAdapter spinnerAdapter = ArrayAdapter.createFromResource(this,
-                R.array.action_list, android.R.layout.simple_spinner_dropdown_item);
+        //ArrayAdapter spinnerAdapter = ArrayAdapter.createFromResource(this,
+        //        R.array.action_list, android.R.layout.simple_spinner_dropdown_item);
 
-        ActionBar.OnNavigationListener onNavigationListener = new ActionBar.OnNavigationListener() {
+        /*ActionBar.OnNavigationListener onNavigationListener = new ActionBar.OnNavigationListener() {
             @Override
             public boolean onNavigationItemSelected(int position, long itemId) {
                 if (_navigationIndex != position) {
@@ -57,14 +57,14 @@ public class MainActivity extends ActionBarActivity {
                             type = ResultFragment.class.getName();
                             break;
                     }
-                    _activateFragment(type, new Bundle());
+                    _activateFragment(type, new Bundle(), false);
                     return true;
                 }
                 return false;
             }
-        };
+        };*/
 
-        actionBar.setListNavigationCallbacks(spinnerAdapter, onNavigationListener);
+        //actionBar.setListNavigationCallbacks(spinnerAdapter, onNavigationListener);
 
         //ActionBar.Tab tab = actionBar.newTab()
         //        .setText(R.string.recent)
@@ -90,20 +90,23 @@ public class MainActivity extends ActionBarActivity {
         //                this, "steel", SteelFragment.class));
         //actionBar.addTab(tab);
         _db = new SQLiteHelper(this);
+        _activateFragment(SearchFragment.class.getName(), new Bundle(), false);
     }
     public SQLiteHelper getDB() {
         return _db;
     }
 
-    private Fragment _activateFragment(String tag, Bundle bundle) {
+    private Fragment _activateFragment(String tag, Bundle bundle, boolean backstack) {
         FragmentManager fm = getSupportFragmentManager();
         Fragment fragment = fm.findFragmentByTag(tag);
-        if (! (fragment != null && fragment.isVisible()) ) {
+        if (fragment == null || !fragment.isVisible()) {
             if (fragment == null)
                 fragment = Fragment.instantiate(MainActivity.this, tag);
             fragment.setArguments(bundle);
             FragmentTransaction fragmentTransaction = fm.beginTransaction();
             fragmentTransaction.replace(android.R.id.content, fragment, tag);
+            if (backstack)
+                fragmentTransaction.addToBackStack(null);
             fragmentTransaction.commit();
         }
         return fragment;
@@ -112,19 +115,22 @@ public class MainActivity extends ActionBarActivity {
     public SteelFragment viewSteel(int steel) {
         Bundle bundle = new Bundle();
         bundle.putInt("STEEL", steel);
-        SteelFragment fragment = (SteelFragment) _activateFragment(SteelFragment.class.getName(), bundle);
-        _navigationIndex = VIEW_STEEL;
-        getSupportActionBar().setSelectedNavigationItem(VIEW_STEEL);
+        SteelFragment fragment = (SteelFragment) _activateFragment(SteelFragment.class.getName(), bundle, true);
+        //_navigationIndex = VIEW_STEEL;
+        //getSupportActionBar().setSelectedNavigationItem(VIEW_STEEL);
         return fragment;
     }
 
     public ResultFragment searchComposition(List<SQLiteHelper.Element> l) {
-        Bundle bundle = new Bundle();
-        ResultFragment fragment = (ResultFragment) _activateFragment(ResultFragment.class.getName(), bundle);
-        fragment.search(l, getDB());
-        _navigationIndex = SEARCH_RESULTS;
-        getSupportActionBar().setSelectedNavigationItem(SEARCH_RESULTS);
-        return fragment;
+        if (!l.isEmpty()) {
+            Bundle bundle = new Bundle();
+            ResultFragment fragment = (ResultFragment) _activateFragment(ResultFragment.class.getName(), bundle, true);
+            fragment.search(l, getDB());
+            //_navigationIndex = SEARCH_RESULTS;
+            //getSupportActionBar().setSelectedNavigationItem(SEARCH_RESULTS);
+            return fragment;
+        }
+        return null;
     }
 
     @Override
@@ -148,10 +154,10 @@ public class MainActivity extends ActionBarActivity {
                     _s = s;
                     Bundle bundle = new Bundle();
                     // TODO bundle search filter
-                    RecentFragment fragment = (RecentFragment) _activateFragment(RecentFragment.class.getName(), bundle);
+                    RecentFragment fragment = (RecentFragment) _activateFragment(RecentFragment.class.getName(), bundle, true);
                     fragment.search(s, getDB());
-                    _navigationIndex = LIST_STEELS;
-                    getSupportActionBar().setSelectedNavigationItem(LIST_STEELS);
+                    //_navigationIndex = LIST_STEELS;
+                    //getSupportActionBar().setSelectedNavigationItem(LIST_STEELS);
                     return true;
                 }
                 return false;

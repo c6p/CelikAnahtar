@@ -40,6 +40,7 @@ public class ResultFragment extends Fragment {
     private SQLiteHelper _db;
     //private Pair<Integer, Pair<List<Pair<String, ArrayList<SQLiteHelper.Element>>>, List<Integer>>> _tempResults;
     private FetchResultTask _task = null;
+    private boolean _loadingIndicator = false;
 
     public static ResultFragment newInstance() {
         ResultFragment fragment = new ResultFragment();
@@ -90,8 +91,10 @@ public class ResultFragment extends Fragment {
                     cols[2] += delim;
                     cols[4] += delim;
                 } else {
-                    cols[2] += delim + String.format("<font color=" + (d.first < 0 ? "red" : "green") + ">%.2f%%</font>", d.first);
-                    cols[4] += delim + String.format("<font color=" + (d.second < 0 ? "red" : "green") + ">%.2f%%</font>", d.second);
+                    Pair<String, String> cMin = colorString(d.first);
+                    Pair<String, String> cMax = colorString(d.second);
+                    cols[2] += delim + "<font color=" + cMin.second + ">" + cMin.first + "</font>";
+                    cols[4] += delim + "<font color=" + cMax.second + ">" + cMax.first + "</font>";
                 }
                 delim = "<br/>";
             }
@@ -103,12 +106,18 @@ public class ResultFragment extends Fragment {
             return vi;
         }
     }
+    private void _showLoadingIndicator(boolean show) {
+        _loadingIndicator = show;
+        if (getView() != null)
+            getView().findViewById(R.id.result_loading).setVisibility(show ? View.VISIBLE : View.GONE);
+    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (_context == null)
             _context = (MainActivity) getActivity();
+        _adapter = new CompositionResultAdapter(_context);
     }
 
     @Override
@@ -121,7 +130,6 @@ public class ResultFragment extends Fragment {
         @Override
         protected Pair<Integer, Pair<List<Pair<String, ArrayList<SQLiteHelper.Element>>>, List<Integer>>> doInBackground(List<SQLiteHelper.Element>... params) {
             Pair<Integer, Pair<List<Pair<String, ArrayList<SQLiteHelper.Element>>>, List<Integer>>> results = null;
-            Log.i("RESULTs", "fetch");
             List<SQLiteHelper.Element> filter = params[0];
             if (_db != null)
                 results = _db.fetchSteelComposition(_fetchPosition, FETCH_LENGTH, filter);
@@ -130,6 +138,7 @@ public class ResultFragment extends Fragment {
         protected void onPostExecute(Pair<Integer, Pair<List<Pair<String, ArrayList<SQLiteHelper.Element>>>, List<Integer>>> results) {
             // data fetched
             if (results != null && results.first > _fetchPosition) {
+                _showLoadingIndicator(false);
                 _fetchPosition = results.first;
                 _adapter.steels.addAll(results.second.first);
                 _adapter.ids.addAll(results.second.second);
@@ -156,12 +165,25 @@ public class ResultFragment extends Fragment {
         for (int i = 0; i < _filter.size(); i++) {
             SQLiteHelper.Element f = _filter.get(i);
             if (f.name.equals(e.name)) {
-                float min = e.min - f.min;
-                float max = f.max - e.max;
-                return Pair.create(min == 0 ? 0 : min * 100 / f.min, max == 0 ? 0 : max * 100 / f.max);
+                float min = (e.min - f.min) * 100 / f.min;
+                float max = (f.max - e.max) * 100 / f.max;
+                return Pair.create(min, max);
             }
         }
         return null;
+    }
+    private Pair<String, String> colorString(Float f) {
+        if (Float.isInfinite(f) || Float.isNaN(f))
+            return Pair.create("-", "gray");
+        else if (f == 0)
+            return Pair.create("0", "gray");
+        else {
+            String s = String.format("%.2f", f);
+            if (f < 0)
+                return Pair.create(s, "red");
+            else // f > 0
+                return Pair.create(s, "green");
+        }
     }
 
     @Override
@@ -170,7 +192,6 @@ public class ResultFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_result, container, false);
         _context = (MainActivity) getActivity();
         ListView listview = (ListView) view.findViewById(R.id.listView);
-        _adapter = new CompositionResultAdapter(_context);
         listview.setAdapter(_adapter);
         listview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -178,6 +199,7 @@ public class ResultFragment extends Fragment {
                 _context.viewSteel(_adapter.getItem(position));
             }
         });
+        //view.findViewById(R.id.result_loading).setVisibility(View.GONE);
         return view;
     }
 
@@ -186,6 +208,7 @@ public class ResultFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         ListView listView = (ListView) view.findViewById(R.id.listView);
+        _showLoadingIndicator(_loadingIndicator);
         listView.setOnScrollListener(new AbsListView.OnScrollListener() {
             private final int PADDING = 32;
             private int _firstVisibleItem = 0;
@@ -213,8 +236,10 @@ public class ResultFragment extends Fragment {
 
     public void fetch()
     {
-        if (!_fetchEnd && _task == null)
+        if (!_fetchEnd && _task == null) {
+            _showLoadingIndicator(true);
             _task = (FetchResultTask) new FetchResultTask().execute(_filter);
+        }
     }
     public void cancel() {
         if (_task != null) {

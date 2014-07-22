@@ -135,12 +135,19 @@ public class SearchFragment extends Fragment implements CompositionDialogFragmen
     }
 
     @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        if (_context == null)
+            _context = (MainActivity) getActivity();
+        _adapter = new CompositionAdapter(_context, new ArrayList<Composition>());
+    }
+
+    @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_search, container, false);
         _context = (MainActivity) getActivity();
         ListView listview = (ListView) view.findViewById(R.id.listView);
-        _adapter = new CompositionAdapter(_context, new ArrayList<Composition>());
         listview.setAdapter(_adapter);
         listview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override

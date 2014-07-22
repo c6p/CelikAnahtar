@@ -5,13 +5,6 @@
     <string name="action_settings">Settings</string>
     <string name="action_search">Search</string>
 
-    <string-array name="action_list">
-        <item>Search Composition</item>
-        <item>List Steels</item>
-        <item>Search Results</item>
-        <item>View Steel</item>
-    </string-array>
-
     <string name="compo_minimum">Minimum</string>
     <string name="compo_maximum">Maximum</string>
     <string name="compo_value">Value</string>
@@ -21,7 +14,7 @@
     <string name="cancel">Cancel</string>
     <string name="compo_add">Add Element</string>
     <string name="compo_remove">remove</string>
-    <string name="compo_search">Search</string>
+    <string name="compo_search">Search Composition</string>
 
     <string-array name="elements">
         <item>C</item>
