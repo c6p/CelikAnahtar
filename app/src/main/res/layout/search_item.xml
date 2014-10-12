@@ -11,10 +11,19 @@
         android:id="@+id/compo_text"
         android:layout_weight="1" />
 
-    <Button
+    <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@+string/compo_remove"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:id="@+id/compo_value"
+        android:layout_weight="1"
+        android:gravity="right" />
+
+    <Button
+        style="?android:attr/buttonStyleSmall"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/property_remove"
         android:id="@+id/compo_remove"
         android:layout_weight="0" />
 </LinearLayout>

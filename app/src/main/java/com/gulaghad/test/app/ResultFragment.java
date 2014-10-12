@@ -1,14 +1,11 @@
 package com.gulaghad.test.app;
 
 import android.app.Activity;
+import android.app.Fragment;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.ListFragment;
 import android.text.Html;
-import android.text.Spanned;
-import android.text.TextUtils;
 import android.util.Log;
 import android.util.Pair;
 import android.view.LayoutInflater;
@@ -16,18 +13,16 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.BaseAdapter;
-import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class ResultFragment extends Fragment {
+public class ResultFragment extends Fragment implements IDataRequester<SQLiteHelper.SteelPropertyList> {
 
-    private static MainActivity _context = null;
+//    private static MainActivity _context = null;
     private static final int FETCH_LENGTH = 256;
     private int _fetchPosition = 0;
     private boolean _fetchEnd = false;
@@ -37,9 +32,9 @@ public class ResultFragment extends Fragment {
     private CompositionResultAdapter _adapter;
 
     private List<SQLiteHelper.Element> _filter;
-    private SQLiteHelper _db;
+//    private SQLiteHelper _db;
     //private Pair<Integer, Pair<List<Pair<String, ArrayList<SQLiteHelper.Element>>>, List<Integer>>> _tempResults;
-    private FetchResultTask _task = null;
+//    private FetchResultTask _task = null;
     private boolean _loadingIndicator = false;
 
     public static ResultFragment newInstance() {
@@ -50,40 +45,81 @@ public class ResultFragment extends Fragment {
     public ResultFragment() {
     }
 
-    class CompositionResultAdapter extends BaseAdapter {
-        Context context;
-        List<Pair<String, ArrayList<SQLiteHelper.Element>>> steels = new ArrayList<Pair<String, ArrayList<SQLiteHelper.Element>>>();
-        List<Integer> ids = new ArrayList<Integer>();
-        private LayoutInflater inflater = null;
+    @Override
+    public void dataReady() {
+        if (_adapter == null)
+            return;
+        Log.i("property", "dataREADY");
+        _adapter.setData();
+    }
 
-        public CompositionResultAdapter(Context pcontext) {
-            context = pcontext;
-            inflater = (LayoutInflater) context
-                    .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+    class CompositionResultAdapter extends BaseAdapter {
+//        Context context;
+//        List<Pair<String, ArrayList<SQLiteHelper.Element>>> steels = new ArrayList<Pair<String, ArrayList<SQLiteHelper.Element>>>();
+//        List<Integer> ids = new ArrayList<Integer>();
+        private LayoutInflater inflater = null;
+        private SQLiteHelper.SteelPropertyList data;
+
+        public CompositionResultAdapter(LayoutInflater li) {
+//            context = pcontext;
+            inflater = li;
+        }
+
+        public void setData() {
+            IDataProvider<SQLiteHelper.SteelPropertyList> provider = Register.steelPropertyListDataProvider.get();
+            if (provider == null) {
+                data = null;
+                return;
+            }
+            data = provider.getData();
+            notifyDataSetChanged();
         }
 
         @Override
-        public int getCount() { return ids.size(); }
+        public int getCount() {
+            if (data == null)
+                return 0;
+            return data.steelIds.size();
+        }
         @Override
         public Integer getItem(int position) {
-            return ids.get(position);
+            if (data == null)
+                return 0;
+            return data.steelIds.get(position);
         }
         @Override
         public long getItemId(int position) {
             return position;
         }
 
-        @Override
-        public View getView(int pos, View convertView, ViewGroup parent) {
-            View vi = convertView;
-            if (vi == null)
-                vi = inflater.inflate(R.layout.result_item, null);
-            Pair<String, ArrayList<SQLiteHelper.Element>> al = steels.get(pos);
-            ((TextView) vi.findViewById(R.id.result_steel)).setText(al.first);
+        // format
+        private String f(float f)
+        {
+            if(f == (int) f)
+                return String.format("%d",(int)f);
+            else
+                return String.format("%s",f);
+        }
+        // join
+        private String j(float min, float max) {
+            if (min == max) {
+                if (min == 0.f) // && max == 0.f
+                    return "";
+                else
+                    return "~ " + f(min);
+            } else if (min == 0.f && max != 0)
+                return "<=" + f(max);
+            else if (max == 0.f && min != 0)
+                return ">=" + f(min);
+            else // min != max != 0
+                return f(min) + " - " + f(max);
+        }
+
+        public String[] stringElements(List<SQLiteHelper.Element> elements, List<SQLiteHelper.Element> filter) {
             String[] cols = {"", "", "", "", ""};
             String delim = "";
-            for (SQLiteHelper.Element e : al.second) {
-                Pair<Float, Float> d = deviation(e);
+            for (SQLiteHelper.Element e : elements) {
+                Pair<Float, Float> d = deviation(e, filter);
                 cols[0] += delim + String.format("<b>%s</b>", e.name);
                 cols[1] += delim + String.format("%.2f%%", e.min);
                 cols[3] += delim + String.format("%.2f%%", e.max);
@@ -98,11 +134,46 @@ public class ResultFragment extends Fragment {
                 }
                 delim = "<br/>";
             }
-            ((TextView) vi.findViewById(R.id.result_element)).setText(Html.fromHtml(cols[0]));
-            ((TextView) vi.findViewById(R.id.result_min)).setText(Html.fromHtml(cols[1]));
-            ((TextView) vi.findViewById(R.id.result_mindiff)).setText(Html.fromHtml(cols[2]));
-            ((TextView) vi.findViewById(R.id.result_max)).setText(Html.fromHtml(cols[3]));
-            ((TextView) vi.findViewById(R.id.result_maxdiff)).setText(Html.fromHtml(cols[4]));
+            return cols;
+        }
+
+        public String[] stringProperties(List<SQLiteHelper.SearchProperty> properties, List<SQLiteHelper.SearchProperty> filter) {
+            String[] cols = {"", "", "", "", ""};
+            String delim = "";
+            for (SQLiteHelper.SearchProperty p : properties) {
+//                Pair<Float, Float> d = deviation(p, filter);
+                cols[0] += delim + String.format("<b>%s</b>", p.property);
+                cols[1] += delim + String.format("%s", j(p.value_min, p.value_max));
+                cols[2] += delim + String.format("%s mm", j(p.dim_min, p.dim_max));
+                cols[3] += delim + String.format("%s °C", j(p.temp_min, p.temp_max));
+                cols[4] += delim + p.state;
+                delim = "<br/>";
+            }
+            return cols;
+        }
+
+        @Override
+        public View getView(int pos, View convertView, ViewGroup parent) {
+            View vi = convertView;
+            if (vi == null)
+                vi = inflater.inflate(R.layout.result_item, null);
+
+            setData();
+            if (data == null)
+                return vi;
+
+            ((TextView) vi.findViewById(R.id.result_steel)).setText(data.steelNames.get(pos));
+
+            SQLiteHelper.SteelPropertyList.Prop filter = data.filter;
+            SQLiteHelper.SteelPropertyList.Prop props = data.steelProps.get(pos);
+            String[] elem = stringElements(props.elements, filter.elements);
+            String[] prop = stringProperties(props.properties, filter.properties);
+
+            ((TextView) vi.findViewById(R.id.result_element)).setText(Html.fromHtml(elem[0]+prop[0]));
+            ((TextView) vi.findViewById(R.id.result_min)).setText(Html.fromHtml(elem[1]+prop[1]));
+            ((TextView) vi.findViewById(R.id.result_mindiff)).setText(Html.fromHtml(elem[2]+prop[2]));
+            ((TextView) vi.findViewById(R.id.result_max)).setText(Html.fromHtml(elem[3]+prop[3]));
+            ((TextView) vi.findViewById(R.id.result_maxdiff)).setText(Html.fromHtml(elem[4]+prop[4]));
             return vi;
         }
     }
@@ -115,55 +186,58 @@ public class ResultFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (_context == null)
-            _context = (MainActivity) getActivity();
-        _adapter = new CompositionResultAdapter(_context);
+//        if (_context == null)
+//            _context = (MainActivity) getActivity();
+        _adapter = new CompositionResultAdapter((LayoutInflater)getActivity().getSystemService(Context.LAYOUT_INFLATER_SERVICE));
+        Register.steelPropertyListDataRequester.set(this);
     }
 
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
-        _fetchPosition = 0;
+//        _fetchPosition = 0;
     }
 
-    private class FetchResultTask extends AsyncTask<List<SQLiteHelper.Element>, Void, Pair<Integer, Pair<List<Pair<String, ArrayList<SQLiteHelper.Element>>>, List<Integer>>> > {
-        @Override
-        protected Pair<Integer, Pair<List<Pair<String, ArrayList<SQLiteHelper.Element>>>, List<Integer>>> doInBackground(List<SQLiteHelper.Element>... params) {
-            Pair<Integer, Pair<List<Pair<String, ArrayList<SQLiteHelper.Element>>>, List<Integer>>> results = null;
-            List<SQLiteHelper.Element> filter = params[0];
-            if (_db != null)
-                results = _db.fetchSteelComposition(_fetchPosition, FETCH_LENGTH, filter);
-            return results;
-        }
-        protected void onPostExecute(Pair<Integer, Pair<List<Pair<String, ArrayList<SQLiteHelper.Element>>>, List<Integer>>> results) {
-            // data fetched
-            if (results != null && results.first > _fetchPosition) {
-                _showLoadingIndicator(false);
-                _fetchPosition = results.first;
-                _adapter.steels.addAll(results.second.first);
-                _adapter.ids.addAll(results.second.second);
-                _adapter.notifyDataSetChanged();
-            } else {
-                _fetchEnd = true;
-            }
-            _task = null;
-        }
-    }
+//    private class FetchResultTask extends AsyncTask<List<SQLiteHelper.Element>, Void, Pair<Integer, Pair<List<Pair<String, ArrayList<SQLiteHelper.Element>>>, List<Integer>>> > {
+//        @Override
+//        protected Pair<Integer, Pair<List<Pair<String, ArrayList<SQLiteHelper.Element>>>, List<Integer>>> doInBackground(List<SQLiteHelper.Element>... params) {
+//            Pair<Integer, Pair<List<Pair<String, ArrayList<SQLiteHelper.Element>>>, List<Integer>>> results = null;
+//            List<SQLiteHelper.Element> filter = params[0];
+//            if (_db != null)
+//                results = _db.fetchSteelComposition(_fetchPosition, FETCH_LENGTH, filter);
+//            return results;
+//        }
+//        protected void onPostExecute(Pair<Integer, Pair<List<Pair<String, ArrayList<SQLiteHelper.Element>>>, List<Integer>>> results) {
+//            // data fetched
+//            if (results != null && results.first > _fetchPosition) {
+//                _showLoadingIndicator(false);
+//                _fetchPosition = results.first;
+//                _adapter.steels.addAll(results.second.first);
+//                _adapter.ids.addAll(results.second.second);
+//                _adapter.notifyDataSetChanged();
+//            } else {
+//                _fetchEnd = true;
+//            }
+//            _task = null;
+//        }
+//    }
 
-    public void search(List<SQLiteHelper.Element> l, SQLiteHelper db) {
-        cancel();
-        if (_adapter != null) {
-            _adapter.steels.clear();
-            _adapter.ids.clear();
-        }
-        _fetchPosition = 0;
-        _filter = l;
-        _db = db;
-        fetch();
-    }
-    private Pair<Float, Float> deviation(SQLiteHelper.Element e) {
-        for (int i = 0; i < _filter.size(); i++) {
-            SQLiteHelper.Element f = _filter.get(i);
+//    public void search(List<SQLiteHelper.Element> l, SQLiteHelper db) {
+//        cancel();
+//        if (_adapter != null) {
+//            _adapter.steels.clear();
+//            _adapter.ids.clear();
+//        }
+//        _fetchPosition = 0;
+//        _filter = l;
+//        _db = db;
+//        fetch();
+//    }
+    private Pair<Float, Float> deviation(SQLiteHelper.Element e, List<SQLiteHelper.Element> filter) {
+        if (filter == null || e == null)
+            return null;
+        for (int i = 0; i < filter.size(); i++) {
+            SQLiteHelper.Element f = filter.get(i);
             if (f.name.equals(e.name)) {
                 float min = (e.min - f.min) * 100 / f.min;
                 float max = (f.max - e.max) * 100 / f.max;
@@ -172,6 +246,20 @@ public class ResultFragment extends Fragment {
         }
         return null;
     }
+//    private Pair<Float, Float> deviation(SQLiteHelper.SearchProperty p, List<SQLiteHelper.SearchProperty> filter) {
+//        if (filter == null || p == null)
+//            return null;
+//        for (int i = 0; i < filter.size(); i++) {
+//            SQLiteHelper.SearchProperty f = filter.get(i);
+//            if (f.property.equals(f.property)) {
+//                float min = (p.value_min - f.value_min) * 100 / f.value_min;
+//                float max = (f.value_max - p.value_max) * 100 / f.value_max;
+//                return Pair.create(min, max);
+//            }
+//        }
+//        return null;
+//    }
+
     private Pair<String, String> colorString(Float f) {
         if (Float.isInfinite(f) || Float.isNaN(f))
             return Pair.create("-", "gray");
@@ -190,14 +278,21 @@ public class ResultFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_result, container, false);
-        _context = (MainActivity) getActivity();
+//        _context = (MainActivity) getActivity();
         ListView listview = (ListView) view.findViewById(R.id.listView);
         listview.setAdapter(_adapter);
         listview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                _context.viewSteel(_adapter.getItem(position));
+                ArrayList<Integer> ids = _adapter.data.steelIds;
+                OnSteelSelectedListener _steelListener = (OnSteelSelectedListener) getActivity();
+                for (int i = 0; i < _adapter.data.steelIds.size(); i++)
+                    Log.i("RecentFragment", "id_steel" + i + ":" + ids.get(i));
+                _steelListener.onSteelSelected(ids.get(position));
+                //SteelFragment steel = _context.viewSteel(_ids.get(position));
             }
+//                _context.viewSteel(_adapter.getItem(position));
+
         });
         //view.findViewById(R.id.result_loading).setVisibility(View.GONE);
         return view;
@@ -229,29 +324,29 @@ public class ResultFragment extends Fragment {
             }
 
             private void onScrollCompleted() {
-                fetch();
+
             }
         });
     }
 
-    public void fetch()
-    {
-        if (!_fetchEnd && _task == null) {
-            _showLoadingIndicator(true);
-            _task = (FetchResultTask) new FetchResultTask().execute(_filter);
-        }
-    }
-    public void cancel() {
-        if (_task != null) {
-            _task.cancel(true);
-            _task = null;
-        }
-        _fetchEnd = false;
-    }
+//    public void fetch()
+//    {
+//        if (!_fetchEnd && _task == null) {
+//            _showLoadingIndicator(true);
+//            _task = (FetchResultTask) new FetchResultTask().execute(_filter);
+//        }
+//    }
+//    public void cancel() {
+//        if (_task != null) {
+//            _task.cancel(true);
+//            _task = null;
+//        }
+//        _fetchEnd = false;
+//    }
 
     @Override
     public void onDetach() {
         super.onDetach();
-        cancel();
+//        cancel();
     }
 }

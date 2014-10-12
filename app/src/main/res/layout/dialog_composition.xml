@@ -17,16 +17,12 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textAppearance="?android:attr/textAppearanceMedium"
-                android:text="@string/compo_element"
-                android:layout_column="0" />
+                android:text="@string/compo_element"/>
 
             <Spinner
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:id="@+id/compo_element"
-                android:layout_column="2"
-                android:layout_span="2"/>
+                android:id="@+id/compo_element"/>
         </TableRow>
 
         <TableRow
@@ -36,17 +32,14 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textAppearance="?android:attr/textAppearanceMedium"
-                android:text="@string/compo_minimum"
-                android:layout_column="0" />
+                android:text="@string/compo_min" />
 
         <EditText
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:inputType="numberDecimal"
-                android:ems="10"
-                android:id="@+id/compo_minimum"
-                android:layout_column="2" />
+                android:ems="6"
+                android:id="@+id/compo_minimum"/>
         </TableRow>
 
         <TableRow
@@ -56,17 +49,14 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textAppearance="?android:attr/textAppearanceMedium"
-                android:text="@string/compo_maximum"
-                android:layout_column="0" />
+                android:text="@string/compo_max"/>
 
             <EditText
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:inputType="numberDecimal"
-                android:ems="10"
-                android:id="@+id/compo_maximum"
-                android:layout_column="2" />
+                android:ems="6"
+                android:id="@+id/compo_maximum"/>
         </TableRow>
 
         <TableRow
@@ -76,17 +66,14 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textAppearance="?android:attr/textAppearanceMedium"
-                android:text="@string/compo_value"
-                android:layout_column="0" />
+                android:text="@string/compo_value" />
 
             <EditText
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:inputType="numberDecimal"
-                android:ems="10"
-                android:id="@+id/compo_value"
-                android:layout_column="2" />
+                android:ems="6"
+                android:id="@+id/compo_value"/>
         </TableRow>
 
         <TableRow
@@ -96,17 +83,14 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textAppearance="?android:attr/textAppearanceMedium"
-                android:text="@string/compo_tolerance"
-                android:layout_column="0" />
+                android:text="@string/compo_tolerance"/>
 
             <EditText
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:inputType="numberDecimal"
-                android:ems="10"
-                android:id="@+id/compo_tolerance"
-                android:layout_column="2" />
+                android:ems="6"
+                android:id="@+id/compo_tolerance"/>
         </TableRow>
 
     </TableLayout>

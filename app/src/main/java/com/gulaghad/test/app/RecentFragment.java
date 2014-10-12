@@ -1,9 +1,9 @@
 package com.gulaghad.test.app;
 
 import android.app.Activity;
+import android.app.ListFragment;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.v4.app.ListFragment;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.Pair;
@@ -14,24 +14,32 @@ import android.widget.ListView;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
-public class RecentFragment extends ListFragment {
+public class RecentFragment extends ListFragment implements IDataRequester<SQLiteHelper.SteelList> {
 
-    private static MainActivity _context = null;
+    private OnSteelSelectedListener _steelListener;
     private static final int FETCH_LENGTH = 32;
     private int _fetchPosition = 0;
-    private boolean _fetchEnd = false;
+//    private boolean _fetchEnd = false;
     private final List<String> _steels = new ArrayList<String>();
     private final List<Integer> _ids = new ArrayList<Integer>();
     private ArrayAdapter<String> _adapter;
+    ListView _listView;
+    private boolean _isComplete = false;
+//    IDataNegotiator<SQLiteHelper.SteelList> _negotiator;
+    private String _dataFilter = new String();
 
-    private String _filter;
-    private FetchSteelTask _task = null;
-    private SQLiteHelper _db=null;
+//    private String _filter;
+//    private FetchSteelTask _task = null;
+//    private SQLiteHelper _db=null;
     //private Pair<Integer, Pair<List<String>, List<Integer>>> _tempResults;
-
+//
     public static RecentFragment newInstance() {
         RecentFragment fragment = new RecentFragment();
+//        Bundle args = new Bundle();
+//        args.putSerializable("NEGOTIATOR", negotiator);
+//        fragment.setArguments(args);
         return fragment;
     }
 
@@ -41,76 +49,86 @@ public class RecentFragment extends ListFragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (_context == null)
-            _context = (MainActivity) getActivity();
+//        if (_activity == null)
+//            _activity = (MainActivity) getActivity();
+//        _negotiator = (IDataNegotiator<SQLiteHelper.SteelList>) getArguments().getSerializable("NEGOTIATOR");
+//        assert _negotiator != null;
+//        _negotiator = Negotiator.get(SQLiteHelper.SteelList.class);
+//        _negotiator.register(this);
+        Register.steelListDataRequester.set(this);
+    }
+
+    @Override
+    public void onDestroy() {
+//        _negotiator.unregister(this);
+        Register.steelListDataRequester.unset(this);
+        super.onDestroy();
     }
 
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
+        _steelListener = (OnSteelSelectedListener) activity;
+        _steels.clear();
+        _ids.clear();
         _adapter = new ArrayAdapter<String>(getActivity(),
                 android.R.layout.simple_list_item_1, android.R.id.text1, _steels);
         setListAdapter(_adapter);
         _fetchPosition = 0;
     }
 
-    private class FetchSteelTask extends AsyncTask<String, Void, Pair<Integer, Pair<List<String>, List<Integer>>> > {
-        @Override
-        protected Pair<Integer, Pair<List<String>, List<Integer>>> doInBackground(String... params) {
-            Pair<Integer, Pair<List<String>, List<Integer>>> results = null;
-            String filter = params[0];
-            if (_db != null && !TextUtils.isEmpty(filter))
-                results = _db.fetchSteel(_fetchPosition, FETCH_LENGTH, filter);
-            return results;
-        }
-        protected void onPostExecute(Pair<Integer, Pair<List<String>, List<Integer>>> results) {
-            // data fetched
-            if (results != null && results.first > _fetchPosition) {
-                _fetchPosition = results.first;
-                _steels.addAll(results.second.first);
-                _ids.addAll(results.second.second);
-                _adapter.notifyDataSetChanged();
-            } else {
-                _fetchEnd = true;
-            }
-            _task = null;
-        }
-    }
-    public void fetch() {
-        if (!_fetchEnd && _task == null)
-            _task = (FetchSteelTask) new FetchSteelTask().execute(_filter);
-    }
-    public void cancel() {
-        if (_task != null) {
-            _task.cancel(true);
-            _task = null;
-        }
-        _fetchEnd = false;
+    @Override
+    public void dataReady() {
+        Log.i("DATA", "ready");
+        if (_listView == null)
+            return;
+        loadSteels();
     }
 
-    public void search(String s, SQLiteHelper db) {
-        cancel();
-        if (!s.equals(_filter)) {
+    private void requestSteels(int size) {
+        if (_isComplete)
+            return;
+        IDataProvider<SQLiteHelper.SteelList> provider = Register.steelListDataProvider.get();
+        if (provider == null) return;
+        provider.requestData(size);
+    }
+
+    private void loadSteels() {
+        IDataProvider<SQLiteHelper.SteelList> provider = Register.steelListDataProvider.get();
+        if (provider == null) return;
+
+        SQLiteHelper.SteelList data = provider.getData();
+        if (data == null) {
+            _isComplete = false;
             _steels.clear();
             _ids.clear();
-            _fetchPosition = 0;
-            _filter = s;
-            _db = db;
+        } else {
+            assert data.steelNames.size() == data.steelIds.size();
+
+            _isComplete = data.complete;
+            int start = _steels.size();
+            if (!_dataFilter.equals(data.filter)) {
+                _steels.clear();
+                _ids.clear();
+                start = 0;
+            }
+            int end = data.steelNames.size();
+            Log.i(Integer.toString(start), Integer.toString(end));
+            _steels.addAll(start, data.steelNames.subList(start, end));
+            _ids.addAll(start, data.steelIds.subList(start, end));
         }
-        fetch();
+        _adapter.notifyDataSetChanged();
     }
 
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
-
-        ListView listView = getListView();
-        listView.setOnScrollListener(new AbsListView.OnScrollListener() {
+        _listView = getListView();
+        _listView.setOnScrollListener(new AbsListView.OnScrollListener() {
             private final int PADDING = 32;
             private int _firstVisibleItem = 0;
             private int _visibleItemCount = 0;
             private int _totalItemCount = 0;
-            private int _scrollState = SCROLL_STATE_IDLE;
+//            private int _scrollState = SCROLL_STATE_IDLE;
 
             public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
                 _firstVisibleItem = firstVisibleItem;
@@ -119,15 +137,20 @@ public class RecentFragment extends ListFragment {
             }
 
             public void onScrollStateChanged(AbsListView view, int scrollState) {
-                _scrollState = scrollState;
-                if (_firstVisibleItem + _visibleItemCount + PADDING > _totalItemCount)
-                    onScrollCompleted();
+//                _scrollState = scrollState;
+                //RecentFragment fragment = (RecentFragment) view.getParent();
+                int size = _firstVisibleItem + _visibleItemCount + PADDING;
+                if (size > _totalItemCount)
+                    requestSteels(size);
             }
 
-            private void onScrollCompleted() {
-                fetch();
-            }
+//            private void onScrollCompleted() {
+//                fetch();
+//            }
+
         });
+        super.onViewCreated(view, savedInstanceState);
+        loadSteels();
     }
 
     /*private final Runnable fetchMore = new Runnable() {
@@ -165,13 +188,14 @@ public class RecentFragment extends ListFragment {
     public void onListItemClick (ListView l, View v, int position, long id) {
         for (int i=0; i<_ids.size(); i++)
             Log.i("RecentFragment", "id_steel" + i +":"+ _ids.get(i));
-        SteelFragment steel = _context.viewSteel(_ids.get(position));
+        _steelListener.onSteelSelected(_ids.get(position));
+        //SteelFragment steel = _context.viewSteel(_ids.get(position));
     }
-
-    @Override
-    public void onDetach() {
-        super.onDetach();
-        cancel();
-    }
+//
+//    @Override
+//    public void onDetach() {
+//        super.onDetach();
+//        cancel();
+//    }
 
 }

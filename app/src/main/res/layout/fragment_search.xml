@@ -10,18 +10,29 @@
         android:layout_height="wrap_content">
 
         <Button
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@+string/compo_search"
-            android:id="@+id/compo_search"
-            android:layout_gravity="center_horizontal"
-            android:layout_weight="1" />
-
-        <Button
+            style="?android:attr/buttonStyleSmall"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@+string/compo_add"
             android:id="@+id/compo_add"
+            android:layout_gravity="center_horizontal"
+            android:layout_weight="1" />
+
+        <Button
+            style="?android:attr/buttonStyleSmall"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@+string/property_add"
+            android:id="@+id/property_add"
+            android:layout_gravity="center_horizontal"
+            android:layout_weight="1" />
+
+        <Button
+            android:drawableLeft="@drawable/ic_action_search"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@+string/property_search"
+            android:id="@+id/property_search"
             android:layout_gravity="center_horizontal"
             android:layout_weight="1" />
 
