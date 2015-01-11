@@ -20,7 +20,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-enum PropertyType { Composition, Mechanical, Physical, Heat, }
+enum PropertyType { Info, Composition, Mechanical, Physical, Heat, }
 
 public class SQLiteHelper extends SQLiteAssetHelper {
     private static SQLiteHelper _instance = null;
@@ -423,12 +423,51 @@ public class SQLiteHelper extends SQLiteAssetHelper {
     public static class PropertyList {
 //        public boolean complete;
         public int steelId;
+        public List<Description> info;
         public List<Element> composition;
         public List<MechanicalProp> mechanicalProps;
         public List<PhysicalProp> physicalProps;
         public List<HeatTreat> heatTreats;
 
         PropertyList(int id) { steelId = id; };
+    }
+
+    public static class Description
+    {
+        public final String wsnr;
+        public final String designation;
+        public final String names;
+        public final String group;
+        public final String standard;
+        public Description(String pwsnr, String pdesignation, String pnames, String pgroup, String pstandard) {
+            wsnr = pwsnr;
+            designation = pdesignation;
+            names = pnames;
+            group = pgroup;
+            standard = pstandard;
+        }
+    }
+    private List<Description> fetchInfo(Integer steel_id) {
+        List<Description> info = new ArrayList<Description>();
+        String q = "SELECT  nw.wsnrdisplay, GROUP_CONCAT(DISTINCT spv.designation), GROUP_CONCAT(DISTINCT sn.name), sg.detail, nv.standard\n" +
+                " FROM steel AS s\n" +
+                " LEFT JOIN steel_propertyvalue AS spv ON s.id_steel == spv.id_steel" +
+                " LEFT JOIN normwsnr AS nw ON s.id_steel == nw.id_steel" +
+                " LEFT JOIN steelgroup AS sg ON s.id_steelgroup == sg.id_steelgroup" +
+                " LEFT JOIN steeldesignation_normvariant AS sdnv ON spv.id_steeldesignation == sdnv.id_steeldesignation" +
+                " LEFT JOIN normvariant AS nv ON nv.id_normvariant == sdnv.id_normvariant" +
+                " LEFT JOIN steelname AS sn ON s.id_steel == sn.id_steel" +
+                " WHERE s.id_steel == ?";
+        Cursor c = _db.rawQuery(q, new String[]{steel_id.toString()});
+        Log.i(LOG, q);
+        if (c.moveToFirst()) {
+//            Log.i("?: ", steel_id.toString());
+            do {
+                info.add(new Description(c.getString(0), c.getString(1), c.getString(2), c.getString(3), c.getString(4)));
+            } while (c.moveToNext());
+        }
+        c.close();
+        return info;
     }
 
     public static class Element
@@ -631,6 +670,8 @@ public class SQLiteHelper extends SQLiteAssetHelper {
 
     public List fetchSteelProps(Integer steel_id, PropertyType type) {
         switch (type) {
+            case Info:
+                return fetchInfo(steel_id);
             case Composition:
                 return fetchComposition(steel_id);
             case Mechanical:

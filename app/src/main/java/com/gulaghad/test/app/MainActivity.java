@@ -394,6 +394,9 @@ class SteelDetails implements IDataProvider<PropertyList> {
             }
 
             switch (data.first) {
+                case Info:
+                    cache.info = data.second;
+                    break;
                 case Composition:
                     cache.composition = data.second;
                     break;

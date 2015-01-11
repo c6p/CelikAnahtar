@@ -22,7 +22,7 @@ import java.util.Map;
 
 
 public class SteelFragment extends Fragment {
-    private static final String[] _tags = {"composition", "mechanical", "physical", "heat"};
+    private static final String[] _tags = {"info", "composition", "mechanical", "physical", "heat"};
 //    private int _steel;
 //    private MainActivity _context;
     private TabChangeListener _listener;
@@ -91,6 +91,23 @@ public class SteelFragment extends Fragment {
                 return ">=" + f(min);
             else // min != max != 0
                 return f(min) + " - " + f(max);
+        }
+
+        private String htmlI(List<SQLiteHelper.Description> info) {
+            if (info == null)
+                return null;
+            if (info.isEmpty())
+                return _noData;
+            String html = "<table>";
+            for (SQLiteHelper.Description i : info) {
+                html += String.format("<tr><td>Material</td><td>%s</td></tr>", i.wsnr);
+                html += String.format("<tr><td>Symbol</td><td>%s</td></tr>", i.designation);
+                html += String.format("<tr><td>Name</td><td>%s</td></tr>", i.names);
+                html += String.format("<tr><td>Steel Group</td><td>%s</td></tr>", i.group);
+                html += String.format("<tr><td>Standard</td><td>%s</td></tr>", i.standard);
+            }
+            html += "</table>";
+            return html;
         }
 
         private String htmlC(List<SQLiteHelper.Element> composition) {
@@ -237,6 +254,8 @@ public class SteelFragment extends Fragment {
             SQLiteHelper.PropertyList steel = provider.getData();
             if (steel != null) {
                 Log.i(_tabId, steel.toString());
+                if (_tabId == "info")
+                    content = htmlI(steel.info);
                 if (_tabId == "composition")
                     content = htmlC(steel.composition);
                 else if (_tabId == "mechanical")
@@ -313,10 +332,11 @@ public class SteelFragment extends Fragment {
         TabHost tabHost = (TabHost) view.findViewById(android.R.id.tabhost);
         tabHost.setup();
         tabHost.setOnTabChangedListener(_listener);
-        tabHost.addTab(tabHost.newTabSpec(_tags[0]).setIndicator("Composition").setContent(R.id.webView));
-        tabHost.addTab(tabHost.newTabSpec(_tags[1]).setIndicator("Mechanical Properties").setContent(R.id.webView));
-        tabHost.addTab(tabHost.newTabSpec(_tags[2]).setIndicator("Physical Properties").setContent(R.id.webView));
-        tabHost.addTab(tabHost.newTabSpec(_tags[3]).setIndicator("Heat Treatment").setContent(R.id.webView));
+        tabHost.addTab(tabHost.newTabSpec(_tags[0]).setIndicator("Info").setContent(R.id.webView));
+        tabHost.addTab(tabHost.newTabSpec(_tags[1]).setIndicator("Composition").setContent(R.id.webView));
+        tabHost.addTab(tabHost.newTabSpec(_tags[2]).setIndicator("Mechanical Properties").setContent(R.id.webView));
+        tabHost.addTab(tabHost.newTabSpec(_tags[3]).setIndicator("Physical Properties").setContent(R.id.webView));
+        tabHost.addTab(tabHost.newTabSpec(_tags[4]).setIndicator("Heat Treatment").setContent(R.id.webView));
         for (int i=0; i<tabHost.getTabWidget().getTabCount(); i++) {
             TextView tv =  (TextView) tabHost.getTabWidget().getChildAt(i).findViewById(android.R.id.title);
             tv.setAllCaps(false);
