@@ -35,7 +35,7 @@ public class ResultFragment extends Fragment implements IDataRequester<SQLiteHel
 //    private SQLiteHelper _db;
     //private Pair<Integer, Pair<List<Pair<String, ArrayList<SQLiteHelper.Element>>>, List<Integer>>> _tempResults;
 //    private FetchResultTask _task = null;
-    private boolean _loadingIndicator = false;
+    private boolean _loadingIndicator = true;
 
     public static ResultFragment newInstance() {
         ResultFragment fragment = new ResultFragment();
@@ -72,6 +72,7 @@ public class ResultFragment extends Fragment implements IDataRequester<SQLiteHel
                 return;
             }
             data = provider.getData();
+            _showLoadingIndicator(false);
             notifyDataSetChanged();
         }
 

@@ -3,17 +3,24 @@ package com.gulaghad.test.app;
 import android.app.Activity;
 import android.app.Fragment;
 import android.content.Context;
+import android.gesture.Gesture;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.GestureDetector;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.webkit.WebView;
+import android.widget.HorizontalScrollView;
 import android.widget.TabHost;
+import android.widget.TabWidget;
 import android.widget.TextView;
 
 import java.util.HashMap;
@@ -26,7 +33,48 @@ public class SteelFragment extends Fragment {
 //    private int _steel;
 //    private MainActivity _context;
     private TabChangeListener _listener;
+    TabHost tabHost;
 //    private AsyncTask<Integer, Void, String>[] _tasks = new AsyncTask[4];
+
+    private class CustomGestureDetector extends GestureDetector.SimpleOnGestureListener {
+
+        public void centerTabItem(int position) {
+            tabHost.setCurrentTab(position);
+            final TabWidget tabWidget = tabHost.getTabWidget();
+
+            final int screenWidth = tabHost.getWidth();
+            final int leftX = tabWidget.getChildAt(position).getLeft();
+            int newX = 0;
+
+            newX = leftX + (tabWidget.getChildAt(position).getWidth() / 2) - (screenWidth / 2);
+            if (newX < 0) {
+                newX = 0;
+            }
+            ((HorizontalScrollView) tabHost.findViewById(R.id.horScrollView)).scrollTo(newX, 0);
+        }
+        @Override
+        public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {;
+            if(e1 == null || e2 == null) return false;
+            if(e1.getPointerCount() > 1 || e2.getPointerCount() > 1) return false;
+            else {
+                int tab = tabHost.getCurrentTab();
+                try { // right to left swipe .. go to next page
+                    if(e1.getX() - e2.getX() > 100 && Math.abs(velocityX) > 800) {
+                        tabHost.setCurrentTab(++tab);
+                        centerTabItem(tab);
+                        return true;
+                    } //left to right swipe .. go to prev page
+                    else if (e2.getX() - e1.getX() > 100 && Math.abs(velocityX) > 800) {
+                        tabHost.setCurrentTab(--tab);
+                        centerTabItem(tab);
+                        return true;
+                    }
+                } catch (Exception e) { // nothing
+                }
+                return false;
+            }
+        }
+    }
 
     private static class TabChangeListener implements TabHost.OnTabChangeListener,
             IDataRequester<SQLiteHelper.PropertyList>
@@ -327,9 +375,17 @@ public class SteelFragment extends Fragment {
 //        Log.i("SteelFragment", Integer.toString(Register.steelId));
         WebView webView = (WebView) view.findViewById(R.id.webView);
         webView.setBackgroundColor(0);
+        webView.setOnTouchListener(new View.OnTouchListener() {
+            GestureDetector gestureDetector = new GestureDetector((MainActivity) getActivity(), new CustomGestureDetector());
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                gestureDetector.onTouchEvent(event);
+                return false;
+            }
+        });
         //_listener = new TabChangeListener(webView);
 //        fetchData();
-        TabHost tabHost = (TabHost) view.findViewById(android.R.id.tabhost);
+        tabHost = (TabHost) view.findViewById(android.R.id.tabhost);
         tabHost.setup();
         tabHost.setOnTabChangedListener(_listener);
         tabHost.addTab(tabHost.newTabSpec(_tags[0]).setIndicator("Info").setContent(R.id.webView));
