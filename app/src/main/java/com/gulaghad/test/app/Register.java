@@ -1,11 +1,10 @@
 package com.gulaghad.test.app;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.gulaghad.test.app.SQLiteHelper.SteelList;
 import static com.gulaghad.test.app.SQLiteHelper.PropertyList;
+import static com.gulaghad.test.app.SQLiteHelper.SteelList;
 import static com.gulaghad.test.app.SQLiteHelper.SteelPropertyList;
 
 interface IDataRequester<T> {
@@ -18,14 +17,6 @@ interface IDataProvider<T> extends IDataHandler<T> {
     public void requestData(int size);
     public T getData();
 }
-//interface IDataNegotiator<T> extends Serializable {
-//    public void register(IDataProvider<T> provider);
-//    public void register(IDataRequester<T> requester);
-//    public void unregister(IDataProvider<T> provider);
-//    public void unregister(IDataRequester<T> requester);
-//    public IDataProvider<T> provider();
-//    public IDataRequester<T> requester();
-//}
 
 class BaseRegister<T> {
     private T _register;

@@ -3,22 +3,17 @@ package com.gulaghad.test.app;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteStatement;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.Pair;
-import android.util.Property;
 import android.util.SparseArray;
 
 import com.readystatesoftware.sqliteasset.SQLiteAssetHelper;
 
-import java.lang.annotation.ElementType;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 enum PropertyType { Info, Composition, Mechanical, Physical, Heat, }
 
@@ -108,9 +103,6 @@ public class SQLiteHelper extends SQLiteAssetHelper {
     }
 
     public SteelList fetchSteel(int pos, int size, String filter) {
-//        ArrayList<String> steels = new ArrayList<String>();
-//        ArrayList<Integer> ids = new ArrayList<Integer>();
-//        int end = pos;
         String q = "SELECT name, id_country, sn.id_steel FROM steelname AS sn LEFT JOIN steel AS s ON sn.id_steel = s.id_steel";
         Cursor c;
         if (TextUtils.isEmpty(filter)) {
@@ -130,7 +122,6 @@ public class SQLiteHelper extends SQLiteAssetHelper {
                 list.steelIds.add(c.getInt(2));
             } while (c.moveToNext() && ++counter < size);
             list.complete = counter != size;
-//            Log.i(Integer.toString(counter), Integer.toString(size));
             list.position = c.getPosition();
         }
         c.close();
@@ -363,63 +354,6 @@ public class SQLiteHelper extends SQLiteAssetHelper {
         return list;
     }
 
-//    public Pair<Integer, Pair< List<Pair<String, ArrayList<Element>>>, List<Integer> >>
-//    fetchSteelComposition(int pos, int size, List<Element> filter) {
-//        List<Pair<String, ArrayList<SQLiteHelper.Element>>> elements = new ArrayList<Pair<String, ArrayList<Element>>>();
-//        List<Integer> ids = new ArrayList<Integer>();
-//        int end = pos;
-//        String q = "SELECT a.id_steel, name, an.id_element, id_min, id_max FROM analysesearch AS s"
-//                + " LEFT JOIN analyse AS a ON s.id_analyse == a.id_analyse"
-//                + " LEFT JOIN steelname AS sn ON a.id_steel == sn.id_steel"
-//                + " LEFT JOIN analyseproperty AS an ON a.id_analyse == an.id_analyse"
-//                + " LEFT JOIN element AS e ON an.id_element == e.id_element";
-//        String joiner = " WHERE";
-//        ArrayList<String> elemList = new ArrayList<String>();
-//        for (SQLiteHelper.Element e : filter) {
-//            q += joiner;
-//            q += String.format(" %s_min <= ? AND %s_max >= ?",
-//                    e.name, e.name);
-//            joiner = " AND";
-//            elemList.add(Float.toString(e.max));
-//            elemList.add(Float.toString(e.min));
-//        }
-//        q += " GROUP BY s.id_analyse, an.id_element ORDER BY a.id_steel, e.sort";
-//        Cursor c;
-//        c = _db.rawQuery(q, (String[]) elemList.toArray(new String[elemList.size()]));
-//        Log.i(LOG, q);
-//        int counter = 0;
-//
-//        int steel = 0;
-//        ArrayList<Element> e = null;
-//        String steelName = "";
-//        if (c.moveToPosition(pos)) {
-//            do {
-//                // steel is different
-//                if (steel != c.getInt(0)) {
-//                    if (++counter >= size)   // do not fetch anymore, if reached max-size
-//                        break;
-//                    if (e != null) {   // is valid
-//                        elements.add(Pair.create(steelName, e));
-//                        ids.add(steel);
-//                    }
-//                    // next element
-//                    steel = c.getInt(0);
-//                    steelName = c.getString(1);
-//                    e = new ArrayList<Element>();
-//                }
-//                e.add(new Element(c.getString(2), c.getFloat(3), c.getFloat(4)));
-//            } while (c.moveToNext());
-//            // merge last steel
-//            if (e != null) {   // is valid
-//                elements.add(Pair.create(steelName, e));
-//                ids.add(steel);
-//            }
-//            end = c.getPosition();
-//        }
-//        c.close();
-//        return Pair.create(end, Pair.create(elements, ids));
-//    }
-
     public static class PropertyList {
 //        public boolean complete;
         public int steelId;
@@ -461,7 +395,6 @@ public class SQLiteHelper extends SQLiteAssetHelper {
         Cursor c = _db.rawQuery(q, new String[]{steel_id.toString()});
         Log.i(LOG, q);
         if (c.moveToFirst()) {
-//            Log.i("?: ", steel_id.toString());
             do {
                 info.add(new Description(c.getString(0), c.getString(1), c.getString(2), c.getString(3), c.getString(4)));
             } while (c.moveToNext());
@@ -490,7 +423,6 @@ public class SQLiteHelper extends SQLiteAssetHelper {
         Cursor c = _db.rawQuery(q, new String[]{steel_id.toString()});
         Log.i(LOG, q);
         if (c.moveToFirst()) {
-//            Log.i("?: ", steel_id.toString());
             do {
                 elements.add(new Element(c.getString(0), c.getFloat(1), c.getFloat(2)));
             } while (c.moveToNext());
@@ -546,11 +478,9 @@ public class SQLiteHelper extends SQLiteAssetHelper {
                 + " LEFT JOIN normbase AS nb ON nv.id_normbase == nb.id_normbase"
                 + " WHERE sp.id_steel == ? AND id_propertytype == 1"
                 + " ORDER BY nv.id_normvariant, s.sort, p.sort, attemp_min, attemp_max;";
-        //stmtMechanicalProps.bindString(0, steel_id.toString());
         Cursor c = _db.rawQuery(q, new String[]{steel_id.toString()});
         Log.i(LOG, q);
         if (c.moveToFirst()) {
-//            Log.i("?: ", steel_id.toString());
             do {
                 props.add(new MechanicalProp(c.getString(0), c.getString(1), c.getString(2),
                         c.getString(3), c.getString(4),
@@ -606,7 +536,6 @@ public class SQLiteHelper extends SQLiteAssetHelper {
         Cursor c = _db.rawQuery(q, new String[]{steel_id.toString()});
         Log.i(LOG, q);
         if (c.moveToFirst()) {
-//            Log.i("?: ", steel_id.toString());
             do {
                 props.add(new PhysicalProp(c.getString(0), c.getString(1), c.getString(2),
                         c.getString(3), c.getString(4), c.getString(5),
@@ -657,7 +586,6 @@ public class SQLiteHelper extends SQLiteAssetHelper {
         Cursor c = _db.rawQuery(q, new String[]{steel_id.toString()});
         Log.i(LOG, q);
         if (c.moveToFirst()) {
-//            Log.i("?: ", steel_id.toString());
             do {
                 props.add(new HeatTreat(c.getString(0), c.getString(1), c.getString(2),
                         c.getString(3), c.getString(4), c.getString(5),

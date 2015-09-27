@@ -2,11 +2,8 @@ package com.gulaghad.test.app;
 
 import android.app.Activity;
 import android.app.ListFragment;
-import android.os.AsyncTask;
 import android.os.Bundle;
-import android.text.TextUtils;
 import android.util.Log;
-import android.util.Pair;
 import android.view.View;
 import android.widget.AbsListView;
 import android.widget.ArrayAdapter;
@@ -14,7 +11,6 @@ import android.widget.ListView;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Logger;
 
 public class RecentFragment extends ListFragment implements IDataRequester<SQLiteHelper.SteelList> {
 
@@ -128,7 +124,6 @@ public class RecentFragment extends ListFragment implements IDataRequester<SQLit
             private int _firstVisibleItem = 0;
             private int _visibleItemCount = 0;
             private int _totalItemCount = 0;
-//            private int _scrollState = SCROLL_STATE_IDLE;
 
             public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
                 _firstVisibleItem = firstVisibleItem;
@@ -137,52 +132,15 @@ public class RecentFragment extends ListFragment implements IDataRequester<SQLit
             }
 
             public void onScrollStateChanged(AbsListView view, int scrollState) {
-//                _scrollState = scrollState;
-                //RecentFragment fragment = (RecentFragment) view.getParent();
                 int size = _firstVisibleItem + _visibleItemCount + PADDING;
                 if (size > _totalItemCount)
                     requestSteels(size);
             }
 
-//            private void onScrollCompleted() {
-//                fetch();
-//            }
-
         });
         super.onViewCreated(view, savedInstanceState);
         loadSteels();
     }
-
-    /*private final Runnable fetchMore = new Runnable() {
-        @Override
-        public void run() {
-            if (!_isLoading)
-            {
-                _isLoading = true;
-                if (TextUtils.isEmpty(_filter))
-                    _tempResults = Pair.create(0, Pair.create((List<String>) new ArrayList<String>(),
-                            (List<Integer>) new ArrayList<Integer>()));
-                else {
-                    _tempResults = _context.getDB().fetchSteel(_fetchPosition, FETCH_LENGTH, _filter);
-                }
-                _context.runOnUiThread(mergeResults);
-            }
-        }
-    };
-
-    private final Runnable mergeResults = new Runnable() {
-        @Override
-        public void run() {
-            // data fetched
-            if (_tempResults.first > _fetchPosition) {
-                _fetchPosition = _tempResults.first;
-                _steels.addAll(_tempResults.second.first);
-                _ids.addAll(_tempResults.second.second);
-            }
-            _adapter.notifyDataSetChanged();
-            _isLoading = false;
-        }
-    };*/
 
     @Override
     public void onListItemClick (ListView l, View v, int position, long id) {
@@ -191,11 +149,5 @@ public class RecentFragment extends ListFragment implements IDataRequester<SQLit
         _steelListener.onSteelSelected(_ids.get(position));
         //SteelFragment steel = _context.viewSteel(_ids.get(position));
     }
-//
-//    @Override
-//    public void onDetach() {
-//        super.onDetach();
-//        cancel();
-//    }
 
 }

@@ -45,14 +45,12 @@ public class CompositionDialogFragment extends DialogFragment {
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
         elements = getResources().getStringArray(R.array.elements);
-        // Use the Builder class for convenient dialog construction
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         LayoutInflater inflater = getActivity().getLayoutInflater();
         view = inflater.inflate(R.layout.dialog_composition, null);
         Spinner spinner = (Spinner) view.findViewById(R.id.compo_element);
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(getActivity(),
                 R.array.elements, android.R.layout.simple_spinner_item);
-        //adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinner.setAdapter(adapter);
 
         builder.setView(view)
@@ -72,11 +70,8 @@ public class CompositionDialogFragment extends DialogFragment {
                     }
                 })
                 .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                        //((SuperListener) getTargetFragment()).onCancel();
-                    }
+                    public void onClick(DialogInterface dialog, int id) { }
                 });
-        // Create the AlertDialog object and return it
         return builder.create();
     }
 }

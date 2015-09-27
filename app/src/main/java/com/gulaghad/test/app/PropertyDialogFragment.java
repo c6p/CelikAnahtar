@@ -7,7 +7,6 @@ import android.app.DialogFragment;
 import android.app.Fragment;
 import android.content.DialogInterface;
 import android.os.Bundle;
-import android.util.Log;
 import android.util.Pair;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -37,7 +36,6 @@ public class PropertyDialogFragment extends DialogFragment {
 
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
-        // Use the Builder class for convenient dialog construction
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         LayoutInflater inflater = getActivity().getLayoutInflater();
         view = inflater.inflate(R.layout.dialog_property, null);
@@ -52,7 +50,6 @@ public class PropertyDialogFragment extends DialogFragment {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 String text = properties.get(propNames.get(position)).second;
-//                Log.i("Property", text);
                 minUnit.setText(text);
                 maxUnit.setText(text);
             }
@@ -69,14 +66,12 @@ public class PropertyDialogFragment extends DialogFragment {
         Spinner state = (Spinner) view.findViewById(R.id.state);
         ArrayAdapter<CharSequence> stateAdapter = ArrayAdapter.createFromResource(getActivity(),
                 R.array.states, android.R.layout.simple_spinner_item);
-        //stateAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         state.setAdapter(stateAdapter);
 
         builder.setView(view)
                 .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
                     public Float getFloat(int id, Float val) {
                         String s = ((TextView) view.findViewById(id)).getText().toString();
-//                        Log.i("float", s);
                         if (s.equals(""))
                             return val;
                             else
@@ -101,10 +96,8 @@ public class PropertyDialogFragment extends DialogFragment {
                 })
                 .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
-                        //((SuperListener) getTargetFragment()).onCancel();
                     }
                 });
-        // Create the AlertDialog object and return it
         return builder.create();
     }
 }
