@@ -12,6 +12,7 @@ import android.util.Pair;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.SearchView;
 
 import java.util.List;
@@ -396,6 +397,7 @@ public class MainActivity extends Activity implements OnSteelSelectedListener, O
 
         ActionBar actionBar = getActionBar();
         actionBar.setDisplayShowTitleEnabled(false);
+        actionBar.setHomeButtonEnabled(true);
 
         _db = SQLiteHelper.get(getApplicationContext());
         _steelSearch = new SteelSearch(_db, this);
@@ -415,9 +417,27 @@ public class MainActivity extends Activity implements OnSteelSelectedListener, O
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.main, menu);
+
         final MenuItem searchItem = menu.findItem(R.id.action_search);
         final SearchView searchView = (SearchView) searchItem.getActionView();
+        final MenuItem searchItem2 = menu.findItem(R.id.action_search2);
+        final SearchView searchView2 = (SearchView) searchItem2.getActionView();
+//        final MenuItem homeItem = menu.findItem(android.R.id.home);
 
+//        homeItem.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+//            @Override
+//            public boolean onMenuItemClick(MenuItem item) {
+//                _activateFragment(SearchFragment.class.getName(), true);
+//                return false;
+//            }
+//        });
+        searchItem.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                searchItem2.collapseActionView();
+                return false;
+            }
+        });
         searchView.setOnQueryTextListener(new OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
@@ -441,20 +461,45 @@ public class MainActivity extends Activity implements OnSteelSelectedListener, O
                 Register.queryFocused = queryTextFocused;
                 if(!queryTextFocused) {
                     searchItem.collapseActionView();
-                } else {
+                }
+                else {
                     searchView.setQuery(Register.steelFilter, true);
                     _activateFragment(RecentFragment.class.getName(), true);
                 }
             }
         });
         searchView.setQueryHint(getResources().getString(R.string.hint_search));
+
+        // hack search image
+        int searchImgId = getResources().getIdentifier("android:id/search_button", null, null);
+        ImageView v = (ImageView) searchView2.findViewById(searchImgId);
+        v.setImageResource(R.drawable.ic_menu_find_holo_dark);
+
+        searchItem2.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                searchItem.collapseActionView();
+                return false;
+            }
+        });
+        searchView2.setOnQueryTextFocusChangeListener(new View.OnFocusChangeListener() {
+            @Override
+            public void onFocusChange(View view, boolean queryTextFocused) {
+                if(!queryTextFocused) {
+                    searchItem2.collapseActionView();
+                }
+            }
+        });
+        searchView2.setQueryHint(getResources().getString(R.string.hint_search2));
+
         return true;
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-            case R.id.action_search:
+            case android.R.id.home:
+                _activateFragment(SearchFragment.class.getName(), true);
                 return true;
             default:
                 return super.onOptionsItemSelected(item);

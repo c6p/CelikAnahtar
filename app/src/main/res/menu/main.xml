@@ -9,9 +9,16 @@
         android:showAsAction="always|collapseActionView"
         android:actionViewClass="android.widget.SearchView" />
 
+    <item android:id="@+id/action_search2"
+        android:title="@string/action_search2"
+        android:orderInCategory="101"
+        android:icon="@drawable/ic_menu_find_holo_dark"
+        android:showAsAction="always|collapseActionView"
+        android:actionViewClass="android.widget.SearchView" />
+
     <!--<item android:id="@+id/action_settings"
         android:title="@string/action_settings"
         android:orderInCategory="101"
-        android:icon="@drawable/ic_action_settings"
-        app:showAsAction="ifRoom" />-->
+        android:icon="@drawable/ic_menu_find_holo_dark"
+        android:showAsAction="ifRoom" />-->
 </menu>

@@ -3,8 +3,10 @@
 
     <string name="app_name">Celik Anahtarı</string>
     <string name="action_settings">Settings</string>
-    <string name="action_search">Search</string>
+    <string name="action_search">Search Steels</string>
+    <string name="action_search2">Search Standards</string>
     <string name="hint_search">Search Steels by Name</string>
+    <string name="hint_search2">Search Standard</string>
 
     <string name="compo_min">Minimum</string>
     <string name="compo_max">Maximum</string>
