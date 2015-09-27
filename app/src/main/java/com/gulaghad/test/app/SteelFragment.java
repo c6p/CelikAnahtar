@@ -312,6 +312,8 @@ public class SteelFragment extends Fragment {
                     content = htmlPP(steel.physicalProps);
                 else if (_tabId == "heat")
                     content = htmlHT(steel.heatTreats);
+            } else {
+                content = _noData;
             }
 
             if (content == null)
@@ -340,10 +342,11 @@ public class SteelFragment extends Fragment {
     }
 
     @Override
-    public void onSaveInstanceState(Bundle bundle) {
+    public void onSaveInstanceState(Bundle savedInstaceState) {
 //        TabHost tabHost = (TabHost) getView().findViewById(android.R.id.tabhost);
 //        bundle.putInt("currentTab", tabHost.getCurrentTab());
-        super.onSaveInstanceState(bundle);
+        savedInstaceState.putInt("tabId", tabHost.getCurrentTab());
+        super.onSaveInstanceState(savedInstaceState);
     }
 
     @Override
@@ -366,6 +369,9 @@ public class SteelFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         super.onCreateView(inflater, container, savedInstanceState);
+        int tabId = 0;
+        if (savedInstanceState != null) tabId = savedInstanceState.getInt("tabId");
+
         View view = inflater.inflate(R.layout.fragment_steel, container, false);
 //        _context = (MainActivity) getActivity();
         Bundle args = getArguments();
@@ -403,6 +409,7 @@ public class SteelFragment extends Fragment {
 //        if (savedInstanceState != null && !savedInstanceState.isEmpty())
 //            tabHost.setCurrentTab(savedInstanceState.getInt("currentTab"));
         _listener.setView(webView);
+        tabHost.setCurrentTab(tabId);
         return tabHost;
     }
 

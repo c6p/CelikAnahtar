@@ -351,31 +351,54 @@ class SteelSearch implements IDataProvider<SQLiteHelper.SteelList> {
 
 class SteelDetails implements IDataProvider<PropertyList> {
     class Handler implements IDataHandler<Pair<PropertyType, List>> {
-        private int _steel;
+        //private int _steel;
         private FetchPropertyTask[] _tasks = new FetchPropertyTask[PropertyType.values().length];
 
-        public Handler() {
-            for (PropertyType sp : PropertyType.values()) {
+        public Handler() { }
 
+        //public int steel() { return _steel; }
+
+        private boolean isPropertyCacheNull(PropertyList cache, PropertyType type) {
+            if (cache != null) {
+                switch (type) {
+                    case Info:
+                        return cache.info == null;
+                    case Composition:
+                        return cache.composition == null;
+                    case Mechanical:
+                        return cache.mechanicalProps == null;
+                    case Physical:
+                        return cache.physicalProps == null;
+                    case Heat:
+                        return cache.heatTreats == null;
+                }
             }
+            return true;
         }
 
-        public int steel() { return _steel; }
-
         public void fetch(int steel) {
-            Log.i("Handler.fetch", Integer.toString(_steel)+"="+Integer.toString(steel));
-            if (_steel == steel)
+            //Log.i("Handler.fetch", Integer.toString(_steel)+"="+Integer.toString(steel));
+            if (Register.steelId == steel)
                 return;
+            Register.steelId = steel;
 
-            _steel = steel;
             for (PropertyType sp : PropertyType.values()) {
                 int i = sp.ordinal();
                 if (_tasks[i] != null) {
                     _tasks[i].cancel(true);
                     _tasks[i] = null;
                 }
-                _tasks[i] = new FetchPropertyTask(_db, this, sp);
-                _tasks[i].execute(_steel);
+            }
+
+            PropertyList cache = null;
+            if (Cache.propertyList.containsKey(Register.steelId))
+                cache = Cache.propertyList.get(Register.steelId);
+            for (PropertyType sp : PropertyType.values()) {
+                int i = sp.ordinal();
+                if (isPropertyCacheNull(cache, sp)) {
+                    _tasks[i] = new FetchPropertyTask(_db, this, sp);
+                    _tasks[i].execute(Register.steelId);
+                }
             }
         }
 
@@ -386,11 +409,11 @@ class SteelDetails implements IDataProvider<PropertyList> {
                 return;
 
             PropertyList cache;
-            if (Cache.propertyList.containsKey(_steel))
-                cache = Cache.propertyList.get(_steel);
+            if (Cache.propertyList.containsKey(Register.steelId))
+                cache = Cache.propertyList.get(Register.steelId);
             else {
-                cache = new PropertyList(_steel);
-                Cache.propertyList.put(_steel, cache);
+                cache = new PropertyList(Register.steelId);
+                Cache.propertyList.put(Register.steelId, cache);
             }
 
             switch (data.first) {
@@ -433,8 +456,8 @@ class SteelDetails implements IDataProvider<PropertyList> {
 
     @Override
     public PropertyList getData() {
-        if (Cache.propertyList.containsKey(_handler.steel())) {
-            return Cache.propertyList.get(_handler.steel());
+        if (Cache.propertyList.containsKey(Register.steelId)) {
+            return Cache.propertyList.get(Register.steelId);
         }
         return null;
     }
