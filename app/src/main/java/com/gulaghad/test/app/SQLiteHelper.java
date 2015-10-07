@@ -15,7 +15,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 
-enum PropertyType { Info, Composition, Mechanical, Physical, Heat, }
+enum PropertyType { Info, Composition, Mechanical, Physical, Heat, Standard, }
 
 public class SQLiteHelper extends SQLiteAssetHelper {
     private static SQLiteHelper _instance = null;
@@ -26,6 +26,7 @@ public class SQLiteHelper extends SQLiteAssetHelper {
 
     // id, (code, country)
     private final SparseArray<Pair<String, String>> _countries;
+    private final SparseArray<String> _normtypes;
     private final LinkedHashMap<String, Pair<Integer, String>> _properties;      // property, pair<id, unit>
     private final HashMap<String, Integer> _states;
     private final SQLiteDatabase _db;
@@ -35,6 +36,7 @@ public class SQLiteHelper extends SQLiteAssetHelper {
         this.setForcedUpgrade();
         _db = this.getReadableDatabase();
         _countries = _fetchCountries();
+        _normtypes = _fetchNormTypes();
         _properties = _fetchProperties();
         _states = _setStates();
     }
@@ -57,6 +59,19 @@ public class SQLiteHelper extends SQLiteAssetHelper {
             } while (c.moveToNext());
         }
         return countries;
+    }
+
+    private SparseArray<String> _fetchNormTypes() {
+        SparseArray<String> normtypes = new SparseArray<String>();
+        String q = "SELECT id_norm, normtype FROM normtype";
+        Log.e(LOG, q);
+        Cursor c = _db.rawQuery(q, null);
+        if (c.moveToFirst()) {
+            do {
+                normtypes.put(c.getInt(0), c.getString(1));
+            } while (c.moveToNext());
+        }
+        return normtypes;
     }
 
     private LinkedHashMap<String, Pair<Integer, String>> _fetchProperties() {
@@ -362,6 +377,7 @@ public class SQLiteHelper extends SQLiteAssetHelper {
         public List<MechanicalProp> mechanicalProps;
         public List<PhysicalProp> physicalProps;
         public List<HeatTreat> heatTreats;
+        public List<Standard> standards;
 
         PropertyList(int id) { steelId = id; };
     }
@@ -596,6 +612,47 @@ public class SQLiteHelper extends SQLiteAssetHelper {
         return props;
     }
 
+    public static class Standard
+    {
+        public final String country;
+        public final String name;
+        public final String standard;
+        public final String wsnr;
+        public Standard(String pcountry, String pname, String pstandard, String pwsnr) {
+            country = pcountry;
+            name = pname;
+            standard = pstandard;
+            wsnr = pwsnr;
+        }
+    }
+    private List<Standard> fetchStandards(Integer steel_id) {
+        List<Standard> standards = new ArrayList<Standard>();
+        String q = "SELECT sd.id_country, sn.name, nv.prefix, nb.name, nv.date, nv.id_norm, wsnrdisplay"
+                + " FROM normwsnr AS n"
+                + " JOIN steel AS s on s.id_steel = n.id_steel"
+                + " JOIN steelname AS sn on s.id_steel = sn.id_steel"
+                + " JOIN steeldesignation AS sd on sn.id_steelname = sd.id_steelname"
+                + " JOIN steeldesignation_normvariant AS sdnv on sd.id_steeldesignation = sdnv.id_steeldesignation"
+                + " JOIN normvariant AS nv on sdnv.id_normvariant = nv.id_normvariant"
+                + " JOIN normbase AS nb on nv.id_normbase = nb.id_normbase"
+                + " WHERE s.id_steel in (SELECT id_steel FROM normwsnr WHERE wsnr="
+                + " (SELECT wsnr FROM normwsnr WHERE id_steel=?))";
+        Cursor c = _db.rawQuery(q, new String[]{steel_id.toString()});
+        Log.i(LOG, q);
+        if (c.moveToFirst()) {
+            do {
+                String date = c.getString(4);
+                if (!date.isEmpty())
+                    date = " (" + date + ")";
+                standards.add(new Standard(_countries.get(c.getInt(0)).second, c.getString(1),
+                        c.getString(2)+" "+c.getString(3)+date+" ("+_normtypes.get(c.getInt(5))+")",
+                        c.getString(6)));
+            } while (c.moveToNext());
+        }
+        c.close();
+        return standards;
+    }
+
     public List fetchSteelProps(Integer steel_id, PropertyType type) {
         switch (type) {
             case Info:
@@ -608,6 +665,8 @@ public class SQLiteHelper extends SQLiteAssetHelper {
                 return fetchPhysicalProps(steel_id);
             case Heat:
                 return fetchHeatTreat(steel_id);
+            case Standard:
+                return fetchStandards(steel_id);
         }
         return null;
     }

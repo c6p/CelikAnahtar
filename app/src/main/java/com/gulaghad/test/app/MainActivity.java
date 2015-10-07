@@ -274,6 +274,8 @@ class SteelDetails implements IDataProvider<PropertyList> {
                         return cache.physicalProps == null;
                     case Heat:
                         return cache.heatTreats == null;
+                    case Standard:
+                        return cache.standards == null;
                 }
             }
             return true;
@@ -333,6 +335,9 @@ class SteelDetails implements IDataProvider<PropertyList> {
                     break;
                 case Heat:
                     cache.heatTreats = data.second;
+                    break;
+                case Standard:
+                    cache.standards = data.second;
                     break;
             }
 

@@ -16,11 +16,13 @@ import android.widget.TabHost;
 import android.widget.TabWidget;
 import android.widget.TextView;
 
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 
 public class SteelFragment extends Fragment {
-    private static final String[] _tags = {"info", "composition", "mechanical", "physical", "heat"};
+    private static final String[] _tags = {"info", "composition", "mechanical", "physical", "heat", "standard"};
     private TabChangeListener _listener;
     TabHost tabHost;
 
@@ -267,6 +269,25 @@ public class SteelFragment extends Fragment {
             return html;
         }
 
+        private String htmlS(List<SQLiteHelper.Standard> standards) {
+            if (standards == null)
+                return null;
+            if (standards.isEmpty())
+                return _noData;
+            Collections.sort(standards, new Comparator<SQLiteHelper.Standard>() {
+                @Override
+                public int compare(SQLiteHelper.Standard lhs, SQLiteHelper.Standard rhs) {
+                    return lhs.country.compareTo(rhs.country);
+                }
+            });
+            String html = "<table style='font-size:80%'><tr class='heading'><th>Country</th><th>Symbol</th><th>Standard</th><th>Material Number</th></tr>";
+            for (SQLiteHelper.Standard s : standards) {
+                html += String.format("<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>", s.country, s.name, s.standard, s.wsnr);
+            }
+            html += "</table>";
+            return html;
+        }
+
         private void displayContent() {
             if (_view == null)
                 return;
@@ -288,6 +309,8 @@ public class SteelFragment extends Fragment {
                     content = htmlPP(steel.physicalProps);
                 else if (_tabId == "heat")
                     content = htmlHT(steel.heatTreats);
+                else if (_tabId == "standard")
+                    content = htmlS(steel.standards);
             } else {
                 content = _noData;
             }
@@ -358,6 +381,7 @@ public class SteelFragment extends Fragment {
         tabHost.addTab(tabHost.newTabSpec(_tags[2]).setIndicator("Mechanical Properties").setContent(R.id.webView));
         tabHost.addTab(tabHost.newTabSpec(_tags[3]).setIndicator("Physical Properties").setContent(R.id.webView));
         tabHost.addTab(tabHost.newTabSpec(_tags[4]).setIndicator("Heat Treatment").setContent(R.id.webView));
+        tabHost.addTab(tabHost.newTabSpec(_tags[5]).setIndicator("Standard Comparison").setContent(R.id.webView));
         for (int i = 0; i < tabHost.getTabWidget().getTabCount(); i++) {
             TextView tv = (TextView) tabHost.getTabWidget().getChildAt(i).findViewById(android.R.id.title);
             tv.setAllCaps(false);
