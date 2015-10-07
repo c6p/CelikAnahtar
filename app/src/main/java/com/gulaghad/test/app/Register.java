@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.gulaghad.test.app.SQLiteHelper.PropertyList;
+import static com.gulaghad.test.app.SQLiteHelper.StandardList;
 import static com.gulaghad.test.app.SQLiteHelper.SteelList;
 import static com.gulaghad.test.app.SQLiteHelper.SteelPropertyList;
 
@@ -40,4 +41,8 @@ public class Register {
     public static SteelPropertyList.Prop propertyFilter = null;
     public static BaseRegister<IDataRequester<SteelPropertyList>> steelPropertyListDataRequester = new BaseRegister<IDataRequester<SteelPropertyList>>();
     public static BaseRegister<IDataProvider<SteelPropertyList>> steelPropertyListDataProvider = new BaseRegister<IDataProvider<SteelPropertyList>>();
+    public static boolean query2Focused = false;
+    public static String standardFilter = "";
+    public static BaseRegister<IDataRequester<StandardList>> standardListDataRequester = new BaseRegister<IDataRequester<StandardList>>();
+    public static BaseRegister<IDataProvider<StandardList>> standardListDataProvider = new BaseRegister<IDataProvider<StandardList>>();
 }

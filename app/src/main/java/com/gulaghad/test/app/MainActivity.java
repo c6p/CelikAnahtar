@@ -45,9 +45,30 @@ class FetchSteelTask extends FetchTask<String, SQLiteHelper.SteelList> {
     @Override
     protected SQLiteHelper.SteelList doInBackground(String... params) {
         String filter = params[0];
+        Log.i(this.toString(), filter);
         if (!filter.isEmpty()) {
-            Log.i(this.toString(), filter);
             SQLiteHelper.SteelList results = db().fetchSteel(_fetchPosition, FETCH_LENGTH, filter);
+            Log.i(this.toString(), results.toString());
+            return results;
+        }
+        return null;
+    }
+}
+
+class FetchStandardTask extends FetchTask<String, SQLiteHelper.StandardList> {
+    private final int FETCH_LENGTH = 32;
+    private int _fetchPosition;
+    public FetchStandardTask(SQLiteHelper db, IDataHandler handler, int position) {
+        super(db, handler);
+        _fetchPosition = position;
+    }
+
+    @Override
+    protected SQLiteHelper.StandardList doInBackground(String... params) {
+        String filter = params[0];
+        Log.i(this.toString(), filter);
+        if (!filter.isEmpty()) {
+            SQLiteHelper.StandardList results = db().fetchStandard(_fetchPosition, FETCH_LENGTH, filter);
             Log.i(this.toString(), results.toString());
             return results;
         }
@@ -377,12 +398,89 @@ class SteelDetails implements IDataProvider<PropertyList> {
     }
 }
 
-class FragmentData {
-    public String tag;
-    public boolean backstack;
-    public Fragment fragment;
+class StandardSearch implements IDataProvider<SQLiteHelper.StandardList> {
+    private SQLiteHelper _db;
+    private FetchStandardTask _task = null;
+
+    StandardSearch(SQLiteHelper db, MainActivity ma)
+    {
+        assert db != null;
+        this._db = db;
+        Register.standardListDataProvider.set(this);
+    }
+
+    private void _fetch(int fetchPosition) {
+        if (!Register.standardFilter.isEmpty() && _task == null)
+            _task = (FetchStandardTask) new FetchStandardTask(_db, this, fetchPosition).execute(Register.standardFilter);
+    }
+    private void _cancel() {
+        if (_task != null) {
+            _task.cancel(true);
+            _task = null;
+        }
+    }
+    public void search(String s) {
+        Log.i("searchView2", s);
+        if (Register.standardFilter.equals(s)) {
+            return;
+        }
+        _cancel();
+        Register.standardFilter = s;
+        requestData(0);
+    }
+
+    @Override
+    public void requestData(int size) {
+        if (Cache.standardList.containsKey(Register.standardFilter)) {
+            SQLiteHelper.StandardList data = Cache.standardList.get(Register.standardFilter);
+            Log.i("requestData2", "DATA2");
+            if (!data.complete && size >= data.position) {
+                Log.i("requestData2", Integer.toString(data.position));
+                _fetch(data.position);
+            }
+            IDataRequester<SQLiteHelper.StandardList> requester = Register.standardListDataRequester.get();
+            if (requester != null)
+                requester.dataReady();
+        } else {
+            _fetch(0);
+        }
+    }
+
+    @Override
+    public SQLiteHelper.StandardList getData() {
+        if (Cache.standardList.containsKey(Register.standardFilter)) {
+            return Cache.standardList.get(Register.standardFilter);
+        }
+        return null;
+    }
+
+    @Override
+    public void setData(SQLiteHelper.StandardList data) {
+        if (data == null)
+            return;
+        if (Cache.standardList.containsKey(Register.standardFilter)) {
+            // merge data
+            SQLiteHelper.StandardList cache = Cache.standardList.get(Register.standardFilter);
+            if (cache.position < data.position) {
+                cache.standards.addAll(data.standards);
+                cache.standardIds.addAll(data.standardIds);
+                cache.complete = data.complete;
+                cache.position = data.position;
+            }
+        } else
+            Cache.standardList.put(Register.standardFilter, data);
+
+        IDataRequester<SQLiteHelper.StandardList> requester = Register.standardListDataRequester.get();
+        if (requester != null)
+            requester.dataReady();
+
+        _task = null;
+    }
 }
 
+interface OnStandardSelectedListener {
+    public void onStandardSelected(int standard);
+}
 interface OnSteelSelectedListener {
     public void onSteelSelected(int steel);
 }
@@ -390,11 +488,12 @@ interface OnPropertySearchListener {
     public void onPropertySearch(List data);
 }
 
-public class MainActivity extends Activity implements OnSteelSelectedListener, OnPropertySearchListener {
+public class MainActivity extends Activity implements OnSteelSelectedListener, OnPropertySearchListener, OnStandardSelectedListener {
     private SQLiteHelper _db;
     private SteelSearch _steelSearch;
     private SteelDetails _steelDetails;
     private PropertySearch _propertySearch;
+    private StandardSearch _standardSearch;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -408,6 +507,7 @@ public class MainActivity extends Activity implements OnSteelSelectedListener, O
         _steelSearch = new SteelSearch(_db, this);
         _steelDetails = new SteelDetails(_db);
         _propertySearch = new PropertySearch(_db);
+        _standardSearch = new StandardSearch(_db, this);
 
         if (savedInstanceState == null) {
             _activateFragment(SearchFragment.class.getName(), false);
@@ -448,12 +548,10 @@ public class MainActivity extends Activity implements OnSteelSelectedListener, O
             public boolean onQueryTextSubmit(String query) {
                 return search(query);
             }
-
             @Override
             public boolean onQueryTextChange(String newText) {
                 return search(newText);
             }
-
             private boolean search(String s) {
                 if (Register.queryFocused)
                     _steelSearch.search(s);
@@ -466,8 +564,7 @@ public class MainActivity extends Activity implements OnSteelSelectedListener, O
                 Register.queryFocused = queryTextFocused;
                 if(!queryTextFocused) {
                     searchItem.collapseActionView();
-                }
-                else {
+                } else {
                     searchView.setQuery(Register.steelFilter, true);
                     _activateFragment(RecentFragment.class.getName(), true);
                 }
@@ -487,11 +584,30 @@ public class MainActivity extends Activity implements OnSteelSelectedListener, O
                 return false;
             }
         });
+        searchView2.setOnQueryTextListener(new OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                return search(query);
+            }
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                return search(newText);
+            }
+            private boolean search(String s) {
+                if (Register.query2Focused)
+                    _standardSearch.search(s);
+                return true;
+            }
+        });
         searchView2.setOnQueryTextFocusChangeListener(new View.OnFocusChangeListener() {
             @Override
             public void onFocusChange(View view, boolean queryTextFocused) {
+                Register.query2Focused = queryTextFocused;
                 if(!queryTextFocused) {
                     searchItem2.collapseActionView();
+                } else {
+                    searchView2.setQuery(Register.standardFilter, true);
+                    _activateFragment(StandardSearchFragment.class.getName(), true);
                 }
             }
         });
@@ -547,5 +663,11 @@ public class MainActivity extends Activity implements OnSteelSelectedListener, O
         _activateFragment(ResultFragment.class.getName(), true);
     }
 
+    @Override
+    public void onStandardSelected(int standard) {
+        Log.i("MainActivity", "onStandardSelected");
+        //_standardDetails.view(standard);
+        //_activateFragment(StandardFragment.class.getName(), true);
+    }
 }
 

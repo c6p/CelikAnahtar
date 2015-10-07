@@ -21,7 +21,7 @@ public class SQLiteHelper extends SQLiteAssetHelper {
     private static SQLiteHelper _instance = null;
 
     private static final String DATABASE_NAME = "celik.db";
-    private static final int DATABASE_VERSION = 2;
+    private static final int DATABASE_VERSION = 3;
     private static final String LOG = "SQLiteHelper";
 
     // id, (code, country)
@@ -669,5 +669,35 @@ public class SQLiteHelper extends SQLiteAssetHelper {
                 return fetchStandards(steel_id);
         }
         return null;
+    }
+
+    public static class StandardList {
+        public final String filter;
+        public boolean complete = false;
+        public int position = 0;
+        public ArrayList<Integer> standardIds = new ArrayList<Integer>();
+        public ArrayList<Pair<String, String>> standards = new ArrayList<Pair<String, String>>();
+
+        StandardList(String filter) {
+            this.filter = filter;
+        }
+    }
+
+    public StandardList fetchStandard(int pos, int size, String filter) {
+        String q = "SELECT docid, standard, snippet(norms) FROM norms WHERE norms MATCH ?";
+        Cursor c = _db.rawQuery(q, new String[]{filter, });
+        Log.i(LOG, q);
+        int counter = 0;
+        StandardList list = new StandardList(filter);
+        if (c.moveToPosition(pos)) {
+            do {
+                list.standardIds.add(c.getInt(0));
+                list.standards.add(Pair.create(c.getString(1), c.getString(2)));
+            } while (c.moveToNext() && ++counter < size);
+            list.complete = counter != size;
+            list.position = c.getPosition();
+        }
+        c.close();
+        return list;
     }
 }
