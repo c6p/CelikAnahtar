@@ -7,15 +7,17 @@ import android.app.DialogFragment;
 import android.app.Fragment;
 import android.content.DialogInterface;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ArrayAdapter;
+import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.TextView;
 
 public class CompositionDialogFragment extends DialogFragment {
 
-    private SearchFragment.Composition _c = null;
+    //private SearchFragment.Composition _c = null;
     private String[] elements;
     View view;
 
@@ -29,17 +31,6 @@ public class CompositionDialogFragment extends DialogFragment {
     }
 
     public CompositionDialogFragment() {
-        Bundle args = getArguments();
-        if (args != null) {
-            String name = args.getString("NAME");
-            if (name != null) {
-                _c = new SearchFragment.Composition(name);
-                _c.min = args.getFloat("MIN");
-                _c.max = args.getFloat("MAX");
-                _c.value = args.getFloat("VALUE");
-                _c.tolerance = args.getFloat("TOLERANCE");
-            }
-        }
     }
 
     @Override
@@ -52,6 +43,15 @@ public class CompositionDialogFragment extends DialogFragment {
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(getActivity(),
                 R.array.elements, android.R.layout.simple_spinner_item);
         spinner.setAdapter(adapter);
+        // set values
+        Bundle args = getArguments();
+        if (args != null) {
+            spinner.setSelection(adapter.getPosition(args.getString("NAME")));
+            ((EditText) view.findViewById(R.id.compo_minimum)).setText(args.getString("MIN"));
+            ((EditText) view.findViewById(R.id.compo_maximum)).setText(args.getString("MAX"));
+            ((EditText) view.findViewById(R.id.compo_value)).setText(args.getString("VALUE"));
+            ((EditText) view.findViewById(R.id.compo_tolerance)).setText(args.getString("TOLERANCE"));
+        }
 
         builder.setView(view)
                 .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {

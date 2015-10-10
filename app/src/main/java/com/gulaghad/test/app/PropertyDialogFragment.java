@@ -12,6 +12,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.TextView;
 
@@ -67,6 +68,18 @@ public class PropertyDialogFragment extends DialogFragment {
         ArrayAdapter<CharSequence> stateAdapter = ArrayAdapter.createFromResource(getActivity(),
                 R.array.states, android.R.layout.simple_spinner_item);
         state.setAdapter(stateAdapter);
+        // set values
+        Bundle args = getArguments();
+        if (args != null) {
+            property.setSelection(propAdapter.getPosition(args.getString("PROPERTY")));
+            state.setSelection(stateAdapter.getPosition(args.getString("STATE")));
+            ((EditText) view.findViewById(R.id.value_min)).setText(args.getString("VALUE_MIN"));
+            ((EditText) view.findViewById(R.id.value_max)).setText(args.getString("VALUE_MAX"));
+            ((EditText) view.findViewById(R.id.dim_min)).setText(args.getString("DIM_MIN"));
+            ((EditText) view.findViewById(R.id.dim_max)).setText(args.getString("DIM_MAX"));
+            ((EditText) view.findViewById(R.id.temp_min)).setText(args.getString("TEMP_MIN"));
+            ((EditText) view.findViewById(R.id.temp_max)).setText(args.getString("TEMP_MAX"));
+        }
 
         builder.setView(view)
                 .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
@@ -84,12 +97,12 @@ public class PropertyDialogFragment extends DialogFragment {
                         SQLiteHelper.SearchProperty p = new SQLiteHelper.SearchProperty(
                                 property.getSelectedItem().toString(),
                                 state.getSelectedItem().toString(),
-                                getFloat(R.id.value_min, null),
-                                getFloat(R.id.value_max, null),
-                                getFloat(R.id.dim_min, null),
-                                getFloat(R.id.dim_max, null),
-                                getFloat(R.id.temp_min, null),
-                                getFloat(R.id.temp_max, null)
+                                getFloat(R.id.value_min, -1f),
+                                getFloat(R.id.value_max, -1f),
+                                getFloat(R.id.dim_min, -1f),
+                                getFloat(R.id.dim_max, -1f),
+                                getFloat(R.id.temp_min, -1f),
+                                getFloat(R.id.temp_max, -1f)
                         );
                         ((SuperListener) getTargetFragment()).onOK(p);
                     }

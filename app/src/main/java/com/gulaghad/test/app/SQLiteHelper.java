@@ -163,14 +163,14 @@ public class SQLiteHelper extends SQLiteAssetHelper {
     }
 
     public static class SearchProperty {
-        public String property;
-        public String state;
-        public Float value_min;
-        public Float value_max;
-        public Float dim_min;
-        public Float dim_max;
-        public Float temp_min;
-        public Float temp_max;
+        public String property="";
+        public String state="";
+        public Float value_min=-1f;
+        public Float value_max=-1f;
+        public Float dim_min=-1f;
+        public Float dim_max=-1f;
+        public Float temp_min=-1f;
+        public Float temp_max=-1f;
         public SearchProperty(String p, String s, Float vmin, Float vmax, Float dmin, Float dmax, Float tmin, Float tmax) {
             property = p;
             state = s;
@@ -181,6 +181,21 @@ public class SQLiteHelper extends SQLiteAssetHelper {
             temp_min = tmin;
             temp_max = tmax;
         }
+        private static String f(float f)
+        {
+            if(f == (int) f)
+                return String.format("%d",(int)f);
+            else
+                return String.format("%s",f);
+        }
+        public String property() { return property; }
+        public String value_min() { return value_min == -1f ? "" : f(value_min); }
+        public String value_max() { return value_max == -1f ? "" : f(value_max); }
+        public String dim_min() { return dim_min == -1f ? "" : f(dim_min); }
+        public String dim_max() { return dim_max == -1f ? "" : f(dim_max); }
+        public String temp_min() { return temp_min == -1f ? "" : f(temp_min); }
+        public String temp_max() { return temp_max == -1f ? "" : f(temp_max); }
+        public String state() { return state; }
     }
 
     private String elementParams(List<Element> elements, ArrayList<String> paramList) {

@@ -4,6 +4,7 @@ import android.app.DialogFragment;
 import android.app.Fragment;
 import android.content.Context;
 import android.os.Bundle;
+import android.util.Log;
 import android.util.Pair;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -25,9 +26,18 @@ public class SearchFragment extends Fragment implements CompositionDialogFragmen
 
     //public CompositionAdapter getAdapter() { return _adapter; }
 
+    //format
+    private static String f(float f)
+    {
+        if(f == (int) f)
+            return String.format("%d",(int)f);
+        else
+            return String.format("%s",f);
+    }
+
     public static class Composition {
         public String name;
-        public float min=-1, max=-1, value=-1, tolerance=0;
+        public float min=-1f, max=-1f, value=-1f, tolerance=0f;
         public Composition() { name = ""; }
         public Composition(String pname) { name = pname; }
         public SQLiteHelper.Element toElement() {
@@ -48,6 +58,11 @@ public class SearchFragment extends Fragment implements CompositionDialogFragmen
                     : Math.min(this.value + tolerance, max);
             return new SQLiteHelper.Element(name, min, max);
         }
+        public String name() { return name; }
+        public String min() { return min == -1f ? "" : f(min); }
+        public String max() { return max == -1f ? "" : f(max); }
+        public String value() { return value == -1f ? "" : f(value); }
+        public String tolerance() { return tolerance == 0f ? "" : f(tolerance); }
     }
 
     class CompositionAdapter extends BaseAdapter {
@@ -59,9 +74,8 @@ public class SearchFragment extends Fragment implements CompositionDialogFragmen
 //        private List<SQLiteHelper.SearchProperty> properties = new ArrayList<SQLiteHelper.SearchProperty>();
         private LayoutInflater inflater = null;
 
-        public CompositionAdapter(Context pcontext, ArrayList<Composition> pdata) {
+        public CompositionAdapter(Context pcontext) {
             context = pcontext;
-//            data = pdata;
             inflater = (LayoutInflater) context
                     .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         }
@@ -95,14 +109,6 @@ public class SearchFragment extends Fragment implements CompositionDialogFragmen
             notifyDataSetChanged();
         }
 
-        // format
-        private String f(float f)
-        {
-            if(f == (int) f)
-                return String.format("%d",(int)f);
-            else
-                return String.format("%s",f);
-        }
         // join
         private String j(Float min, Float max) {
             if (min == null)
@@ -164,10 +170,14 @@ public class SearchFragment extends Fragment implements CompositionDialogFragmen
             final List<Object> data = Register.propertySearch;
 
             vi.setTag(pos);
-            text.setOnClickListener(new View.OnClickListener() {
+            vi.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    addItem(data.get((Integer) v.getTag()));
+                    Object item = data.get((Integer) v.getTag());
+                    if (item instanceof Composition)
+                        showComposition((Composition) item);
+                    else
+                        showProperty((SQLiteHelper.SearchProperty)item);
                 }
             });
 
@@ -215,7 +225,7 @@ public class SearchFragment extends Fragment implements CompositionDialogFragmen
         super.onCreate(savedInstanceState);
         if (_context == null)
             _context = (MainActivity) getActivity();
-        _adapter = new CompositionAdapter(_context, new ArrayList<Composition>());
+        _adapter = new CompositionAdapter(_context);
     }
 
     @Override
@@ -236,7 +246,7 @@ public class SearchFragment extends Fragment implements CompositionDialogFragmen
         buttonAddCompo.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                showComposition(new Composition());
+                showComposition(null);
             }
         });
 
@@ -244,7 +254,7 @@ public class SearchFragment extends Fragment implements CompositionDialogFragmen
         buttonAddProp.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                showProperty();
+                showProperty(null);
             }
         });
 
@@ -259,8 +269,19 @@ public class SearchFragment extends Fragment implements CompositionDialogFragmen
         return view;
     }
 
-    void showProperty() {
+    void showProperty(SQLiteHelper.SearchProperty i) {
         Bundle bundle = new Bundle();
+        if (i != null) {
+            Log.i("", i.toString());
+            bundle.putString("PROPERTY", i.property());
+            bundle.putString("STATE", i.state());
+            bundle.putString("VALUE_MIN", i.value_min());
+            bundle.putString("VALUE_MAX", i.value_max());
+            bundle.putString("DIM_MIN", i.dim_min());
+            bundle.putString("DIM_MAX", i.dim_max());
+            bundle.putString("TEMP_MIN", i.temp_min());
+            bundle.putString("TEMP_MAX", i.temp_max());
+        }
         DialogFragment d = PropertyDialogFragment.newInstance(this);
         d.setArguments(bundle);
         d.show(getFragmentManager(), "property");
@@ -268,11 +289,14 @@ public class SearchFragment extends Fragment implements CompositionDialogFragmen
 
     void showComposition(Composition c) {
         Bundle bundle = new Bundle();
-        bundle.putString("NAME", c.name);
-        bundle.putFloat("MIN", c.min);
-        bundle.putFloat("MAX", c.max);
-        bundle.putFloat("VALUE", c.value);
-        bundle.putFloat("TOLERANCE", c.tolerance);
+        if (c != null) {
+            Log.i("", c.toString());
+            bundle.putString("NAME", c.name());
+            bundle.putString("MIN", c.min());
+            bundle.putString("MAX", c.max());
+            bundle.putString("VALUE", c.value());
+            bundle.putString("TOLERANCE", c.tolerance());
+        }
         DialogFragment d = CompositionDialogFragment.newInstance(this);
         d.setArguments(bundle);
         d.show(getFragmentManager(), "composition");
