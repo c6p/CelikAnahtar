@@ -269,19 +269,19 @@ public class SteelFragment extends Fragment {
             return html;
         }
 
-        private String htmlS(List<SQLiteHelper.Standard> standards) {
+        private String htmlS(List<SQLiteHelper.Norm> standards) {
             if (standards == null)
                 return null;
             if (standards.isEmpty())
                 return _noData;
-            Collections.sort(standards, new Comparator<SQLiteHelper.Standard>() {
+            Collections.sort(standards, new Comparator<SQLiteHelper.Norm>() {
                 @Override
-                public int compare(SQLiteHelper.Standard lhs, SQLiteHelper.Standard rhs) {
+                public int compare(SQLiteHelper.Norm lhs, SQLiteHelper.Norm rhs) {
                     return lhs.country.compareTo(rhs.country);
                 }
             });
             String html = "<table style='font-size:80%'><tr class='heading'><th>Country</th><th>Symbol</th><th>Standard</th><th>Material Number</th></tr>";
-            for (SQLiteHelper.Standard s : standards) {
+            for (SQLiteHelper.Norm s : standards) {
                 html += String.format("<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>", s.country, s.name, s.standard, s.wsnr);
             }
             html += "</table>";
@@ -311,8 +311,6 @@ public class SteelFragment extends Fragment {
                     content = htmlHT(steel.heatTreats);
                 else if (_tabId == "standard")
                     content = htmlS(steel.standards);
-            } else {
-                content = _noData;
             }
 
             if (content == null)
@@ -341,9 +339,9 @@ public class SteelFragment extends Fragment {
     }
 
     @Override
-    public void onSaveInstanceState(Bundle savedInstaceState) {
-        savedInstaceState.putInt("tabId", tabHost.getCurrentTab());
-        super.onSaveInstanceState(savedInstaceState);
+    public void onSaveInstanceState(Bundle savedInstanceState) {
+        savedInstanceState.putInt("tabId", tabHost.getCurrentTab());
+        super.onSaveInstanceState(savedInstanceState);
     }
 
     @Override

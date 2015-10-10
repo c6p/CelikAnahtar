@@ -9,4 +9,5 @@ public class Cache {
     public static Map<String, SQLiteHelper.StandardList> standardList = new TreeMap<String, SQLiteHelper.StandardList>();
     public static Map<Integer, SQLiteHelper.PropertyList> propertyList = new HashMap<Integer, SQLiteHelper.PropertyList>();
     public static SQLiteHelper.SteelPropertyList steelPropertyList;
+    public static Map<SQLiteHelper.Standard, SQLiteHelper.StandardSteelList> standardSteelList = new TreeMap<SQLiteHelper.Standard, SQLiteHelper.StandardSteelList>();
 }

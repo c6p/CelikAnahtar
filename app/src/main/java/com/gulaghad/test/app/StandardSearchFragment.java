@@ -19,9 +19,8 @@ import java.util.List;
 public class StandardSearchFragment extends ListFragment implements IDataRequester<SQLiteHelper.StandardList> {
 
     private OnStandardSelectedListener _standardListener;
-    private final List<Pair<String, String>> _standards = new ArrayList<Pair<String, String>>();
-    private final List<Integer> _ids = new ArrayList<Integer>();
-    private ArrayAdapter<Pair<String, String>> _adapter;
+    private final List<SQLiteHelper.Standard> _standards = new ArrayList<SQLiteHelper.Standard>();
+    private ArrayAdapter<SQLiteHelper.Standard> _adapter;
     ListView _listView;
     private boolean _isComplete = false;
     private String _dataFilter = new String();
@@ -51,8 +50,7 @@ public class StandardSearchFragment extends ListFragment implements IDataRequest
         super.onAttach(activity);
         _standardListener = (OnStandardSelectedListener) activity;
         _standards.clear();
-        _ids.clear();
-        _adapter = new ArrayAdapter<Pair<String, String>>(getActivity(),
+        _adapter = new ArrayAdapter<SQLiteHelper.Standard>(getActivity(),
                 android.R.layout.simple_list_item_2, android.R.id.text1, _standards) {
             @Override
             public View getView(int position, View convertView, ViewGroup parent) {
@@ -60,8 +58,8 @@ public class StandardSearchFragment extends ListFragment implements IDataRequest
                 TextView text1 = (TextView) view.findViewById(android.R.id.text1);
                 TextView text2 = (TextView) view.findViewById(android.R.id.text2);
 
-                text1.setText(_standards.get(position).first);
-                text2.setText(Html.fromHtml(_standards.get(position).second));
+                text1.setText(_standards.get(position).name);
+                text2.setText(Html.fromHtml(_standards.get(position).title));
                 return view;
             }
         };
@@ -91,21 +89,16 @@ public class StandardSearchFragment extends ListFragment implements IDataRequest
         if (data == null) {
             _isComplete = false;
             _standards.clear();
-            _ids.clear();
         } else {
-            assert data.standards.size() == data.standardIds.size();
-
             _isComplete = data.complete;
             int start = _standards.size();
             if (!_dataFilter.equals(data.filter)) {
                 _standards.clear();
-                _ids.clear();
                 start = 0;
             }
             int end = data.standards.size();
             Log.i(Integer.toString(start), Integer.toString(end));
             _standards.addAll(start, data.standards.subList(start, end));
-            _ids.addAll(start, data.standardIds.subList(start, end));
         }
         _adapter.notifyDataSetChanged();
     }
@@ -138,7 +131,6 @@ public class StandardSearchFragment extends ListFragment implements IDataRequest
 
     @Override
     public void onListItemClick (ListView l, View v, int position, long id) {
-        for (int i=0; i<_ids.size(); i++)
-        _standardListener.onStandardSelected(_ids.get(position));
+        _standardListener.onStandardSelected(_standards.get(position));
     }
 }

@@ -15,7 +15,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 
-enum PropertyType { Info, Composition, Mechanical, Physical, Heat, Standard, }
+enum PropertyType { Info, Composition, Mechanical, Physical, Heat, Norm, }
 
 public class SQLiteHelper extends SQLiteAssetHelper {
     private static SQLiteHelper _instance = null;
@@ -377,7 +377,7 @@ public class SQLiteHelper extends SQLiteAssetHelper {
         public List<MechanicalProp> mechanicalProps;
         public List<PhysicalProp> physicalProps;
         public List<HeatTreat> heatTreats;
-        public List<Standard> standards;
+        public List<Norm> standards;
 
         PropertyList(int id) { steelId = id; };
     }
@@ -612,21 +612,21 @@ public class SQLiteHelper extends SQLiteAssetHelper {
         return props;
     }
 
-    public static class Standard
+    public static class Norm
     {
         public final String country;
         public final String name;
         public final String standard;
         public final String wsnr;
-        public Standard(String pcountry, String pname, String pstandard, String pwsnr) {
+        public Norm(String pcountry, String pname, String pstandard, String pwsnr) {
             country = pcountry;
             name = pname;
             standard = pstandard;
             wsnr = pwsnr;
         }
     }
-    private List<Standard> fetchStandards(Integer steel_id) {
-        List<Standard> standards = new ArrayList<Standard>();
+    private List<Norm> fetchNorms(Integer steel_id) {
+        List<Norm> standards = new ArrayList<Norm>();
         String q = "SELECT sd.id_country, sn.name, nv.prefix, nb.name, nv.date, nv.id_norm, wsnrdisplay"
                 + " FROM normwsnr AS n"
                 + " JOIN steel AS s on s.id_steel = n.id_steel"
@@ -644,7 +644,7 @@ public class SQLiteHelper extends SQLiteAssetHelper {
                 String date = c.getString(4);
                 if (!date.isEmpty())
                     date = " (" + date + ")";
-                standards.add(new Standard(_countries.get(c.getInt(0)).second, c.getString(1),
+                standards.add(new Norm(_countries.get(c.getInt(0)).second, c.getString(1),
                         c.getString(2)+" "+c.getString(3)+date+" ("+_normtypes.get(c.getInt(5))+")",
                         c.getString(6)));
             } while (c.moveToNext());
@@ -665,18 +665,62 @@ public class SQLiteHelper extends SQLiteAssetHelper {
                 return fetchPhysicalProps(steel_id);
             case Heat:
                 return fetchHeatTreat(steel_id);
-            case Standard:
-                return fetchStandards(steel_id);
+            case Norm:
+                return fetchNorms(steel_id);
         }
         return null;
+    }
+
+    public static class StandardSteelList {
+        public ArrayList<Integer> steelIds = new ArrayList<Integer>();
+        public ArrayList<String> steelNames = new ArrayList<String>();
+    }
+
+    public StandardSteelList fetchStandardSteel(Integer norm) {
+        String q = "SELECT id_steel, name" +
+                " FROM steeldesignation_normvariant AS sdnv" +
+                " NATURAL JOIN steeldesignation" +
+                " NATURAL JOIN steelname" +
+                " WHERE id_normvariant=?";
+        Cursor c;
+        c = _db.rawQuery(q, new String[]{norm.toString(), });
+
+        Log.i(LOG, q);
+        StandardSteelList list = new StandardSteelList();
+        if (c.moveToFirst()) {
+            do {
+                list.steelIds.add(c.getInt(0));
+                list.steelNames.add(c.getString(1));
+            } while (c.moveToNext());
+        }
+        c.close();
+        return list;
+    }
+
+    public static class Standard implements Comparable<Standard> {
+        public final Integer id;
+        public final String name;
+        public final String title;
+
+        public Standard(Integer id, String name, String title) {
+            this.id = id;
+            this.name = name;
+            this.title = title;
+        }
+        @Override
+        public int compareTo(Standard another) {
+            if (this.id.equals(another.id)) return 0;
+            if (this.id < another.id) return -1;
+            if (this.id > another.id) return 1;
+            return 0;
+        }
     }
 
     public static class StandardList {
         public final String filter;
         public boolean complete = false;
         public int position = 0;
-        public ArrayList<Integer> standardIds = new ArrayList<Integer>();
-        public ArrayList<Pair<String, String>> standards = new ArrayList<Pair<String, String>>();
+        public ArrayList<Standard> standards = new ArrayList<Standard>();
 
         StandardList(String filter) {
             this.filter = filter;
@@ -684,15 +728,14 @@ public class SQLiteHelper extends SQLiteAssetHelper {
     }
 
     public StandardList fetchStandard(int pos, int size, String filter) {
-        String q = "SELECT docid, standard, snippet(norms) FROM norms WHERE norms MATCH ?";
-        Cursor c = _db.rawQuery(q, new String[]{filter, });
+        String q = "SELECT docid, standard, title FROM norms WHERE norms MATCH ?";
+        Cursor c = _db.rawQuery(q, new String[]{filter+"*", });
         Log.i(LOG, q);
         int counter = 0;
         StandardList list = new StandardList(filter);
         if (c.moveToPosition(pos)) {
             do {
-                list.standardIds.add(c.getInt(0));
-                list.standards.add(Pair.create(c.getString(1), c.getString(2)));
+                list.standards.add(new Standard(c.getInt(0), c.getString(1), c.getString(2)));
             } while (c.moveToNext() && ++counter < size);
             list.complete = counter != size;
             list.position = c.getPosition();

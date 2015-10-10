@@ -15,12 +15,14 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.SearchView;
 
+import java.util.Arrays;
 import java.util.List;
 
 import static android.widget.SearchView.OnQueryTextListener;
 import static com.gulaghad.test.app.SQLiteHelper.PropertyList;
 import static com.gulaghad.test.app.SQLiteHelper.SearchProperty;
 import static com.gulaghad.test.app.SQLiteHelper.SteelPropertyList;
+import static com.gulaghad.test.app.SQLiteHelper.StandardSteelList;
 
 abstract class FetchTask<T, S> extends AsyncTask<T, Void, S> {
     private IDataHandler<S> _handler;
@@ -108,6 +110,21 @@ class FetchSearchResultTask extends FetchTask<SteelPropertyList.Prop, SteelPrope
             return null;
         SteelPropertyList list = db().fetchSteelProperty(_fetchPosition, FETCH_LENGTH, prop);
         return list;
+    }
+}
+
+class FetchStandardSteelTask extends FetchTask<SQLiteHelper.Standard, SQLiteHelper.StandardSteelList> {
+    public FetchStandardSteelTask(SQLiteHelper db, IDataHandler handler) {
+        super(db, handler);
+    }
+
+    @Override
+    protected SQLiteHelper.StandardSteelList doInBackground(SQLiteHelper.Standard... params) {
+        SQLiteHelper.Standard standard = params[0];
+        Log.i(this.toString(), standard.toString());
+        SQLiteHelper.StandardSteelList results = db().fetchStandardSteel(standard.id);
+        Log.i(this.toString(), results.toString());
+        return results;
     }
 }
 
@@ -295,7 +312,7 @@ class SteelDetails implements IDataProvider<PropertyList> {
                         return cache.physicalProps == null;
                     case Heat:
                         return cache.heatTreats == null;
-                    case Standard:
+                    case Norm:
                         return cache.standards == null;
                 }
             }
@@ -357,7 +374,7 @@ class SteelDetails implements IDataProvider<PropertyList> {
                 case Heat:
                     cache.heatTreats = data.second;
                     break;
-                case Standard:
+                case Norm:
                     cache.standards = data.second;
                     break;
             }
@@ -463,7 +480,6 @@ class StandardSearch implements IDataProvider<SQLiteHelper.StandardList> {
             SQLiteHelper.StandardList cache = Cache.standardList.get(Register.standardFilter);
             if (cache.position < data.position) {
                 cache.standards.addAll(data.standards);
-                cache.standardIds.addAll(data.standardIds);
                 cache.complete = data.complete;
                 cache.position = data.position;
             }
@@ -478,8 +494,65 @@ class StandardSearch implements IDataProvider<SQLiteHelper.StandardList> {
     }
 }
 
+class StandardDetails implements IDataProvider<SQLiteHelper.StandardSteelList> {
+    private SQLiteHelper _db;
+    private Handler _handler = new Handler();
+
+    public StandardDetails(SQLiteHelper db) {
+        assert db != null;
+        _db = db;
+        Register.standardSteelListDataProvider.set(this);
+    }
+
+    class Handler implements IDataHandler<StandardSteelList> {
+        FetchStandardSteelTask _task = null;
+        @Override
+        public void setData(StandardSteelList data) {
+            if (data == null)
+                return;
+            Cache.standardSteelList.put(Register.standard, data);
+            Log.i("STANDARD", "Put Cache" + data.steelNames.size());
+            StandardDetails.this.setData(data);
+        }
+
+        public void fetch(SQLiteHelper.Standard standard) {
+            if (Register.standard == standard)
+                return;
+            Register.standard = standard;
+            if (!Cache.standardSteelList.containsKey(standard)) {
+                _task = new FetchStandardSteelTask(_db, this);
+                _task.execute(standard);
+            }
+        }
+    }
+
+    public void view(SQLiteHelper.Standard standard) {
+        Log.i("StandardDetails", "view");
+        _handler.fetch(standard);
+    }
+
+    @Override
+    public void requestData(int size) { }
+
+    @Override
+    public StandardSteelList getData() {
+        if (Cache.standardSteelList.containsKey(Register.standard)) {
+            Log.i("STANDARD", "Get Cache" + Cache.standardSteelList.get(Register.standard).steelNames.size());
+            return Cache.standardSteelList.get(Register.standard);
+        }
+        return null;
+    }
+
+    @Override
+    public void setData(SQLiteHelper.StandardSteelList data) {
+        IDataRequester<StandardSteelList> requester = Register.standardSteelListDataRequester.get();
+        if (requester != null)
+            requester.dataReady();
+    }
+}
+
 interface OnStandardSelectedListener {
-    public void onStandardSelected(int standard);
+    public void onStandardSelected(SQLiteHelper.Standard standard);
 }
 interface OnSteelSelectedListener {
     public void onSteelSelected(int steel);
@@ -494,6 +567,7 @@ public class MainActivity extends Activity implements OnSteelSelectedListener, O
     private SteelDetails _steelDetails;
     private PropertySearch _propertySearch;
     private StandardSearch _standardSearch;
+    private StandardDetails _standardDetails;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -508,6 +582,7 @@ public class MainActivity extends Activity implements OnSteelSelectedListener, O
         _steelDetails = new SteelDetails(_db);
         _propertySearch = new PropertySearch(_db);
         _standardSearch = new StandardSearch(_db, this);
+        _standardDetails = new StandardDetails(_db);
 
         if (savedInstanceState == null) {
             _activateFragment(SearchFragment.class.getName(), false);
@@ -631,7 +706,7 @@ public class MainActivity extends Activity implements OnSteelSelectedListener, O
         FragmentManager fm = getFragmentManager();
         fm.popBackStackImmediate(tag, 0);
 
-        if (fm.getBackStackEntryCount() < 1 || fm.getBackStackEntryAt(fm.getBackStackEntryCount()-1).getName() != tag) {
+        if (fm.getBackStackEntryCount() < 1 || !fm.getBackStackEntryAt(fm.getBackStackEntryCount()-1).getName().equals(tag)) {
             Fragment fragment = fm.findFragmentByTag(tag);
             if (fragment == null)
                 fragment = Fragment.instantiate(MainActivity.this, tag);
@@ -664,10 +739,10 @@ public class MainActivity extends Activity implements OnSteelSelectedListener, O
     }
 
     @Override
-    public void onStandardSelected(int standard) {
+    public void onStandardSelected(SQLiteHelper.Standard standard) {
         Log.i("MainActivity", "onStandardSelected");
-        //_standardDetails.view(standard);
-        //_activateFragment(StandardFragment.class.getName(), true);
+        _standardDetails.view(standard);
+        _activateFragment(StandardFragment.class.getName(), true);
     }
 }
 

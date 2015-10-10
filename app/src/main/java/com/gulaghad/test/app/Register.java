@@ -7,6 +7,7 @@ import static com.gulaghad.test.app.SQLiteHelper.PropertyList;
 import static com.gulaghad.test.app.SQLiteHelper.StandardList;
 import static com.gulaghad.test.app.SQLiteHelper.SteelList;
 import static com.gulaghad.test.app.SQLiteHelper.SteelPropertyList;
+import static com.gulaghad.test.app.SQLiteHelper.StandardSteelList;
 
 interface IDataRequester<T> {
     public void dataReady();
@@ -45,4 +46,7 @@ public class Register {
     public static String standardFilter = "";
     public static BaseRegister<IDataRequester<StandardList>> standardListDataRequester = new BaseRegister<IDataRequester<StandardList>>();
     public static BaseRegister<IDataProvider<StandardList>> standardListDataProvider = new BaseRegister<IDataProvider<StandardList>>();
+    public static SQLiteHelper.Standard standard;
+    public static BaseRegister<IDataRequester<StandardSteelList>> standardSteelListDataRequester = new BaseRegister<IDataRequester<StandardSteelList>>();
+    public static BaseRegister<IDataProvider<StandardSteelList>> standardSteelListDataProvider = new BaseRegister<IDataProvider<StandardSteelList>>();
 }
