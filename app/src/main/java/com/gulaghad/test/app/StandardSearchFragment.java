@@ -131,6 +131,6 @@ public class StandardSearchFragment extends ListFragment implements IDataRequest
 
     @Override
     public void onListItemClick (ListView l, View v, int position, long id) {
-        _standardListener.onStandardSelected(_standards.get(position));
+        _standardListener.onStandardSelected(_standards.get(position).id);
     }
 }

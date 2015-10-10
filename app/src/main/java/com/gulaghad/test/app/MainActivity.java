@@ -113,18 +113,18 @@ class FetchSearchResultTask extends FetchTask<SteelPropertyList.Prop, SteelPrope
     }
 }
 
-class FetchStandardSteelTask extends FetchTask<SQLiteHelper.Standard, SQLiteHelper.StandardSteelList> {
+class FetchStandardSteelTask extends FetchTask<Integer, Pair<SQLiteHelper.Standard, SQLiteHelper.StandardSteelList>> {
     public FetchStandardSteelTask(SQLiteHelper db, IDataHandler handler) {
         super(db, handler);
     }
 
     @Override
-    protected SQLiteHelper.StandardSteelList doInBackground(SQLiteHelper.Standard... params) {
-        SQLiteHelper.Standard standard = params[0];
-        Log.i(this.toString(), standard.toString());
-        SQLiteHelper.StandardSteelList results = db().fetchStandardSteel(standard.id);
+    protected Pair<SQLiteHelper.Standard, SQLiteHelper.StandardSteelList> doInBackground(Integer... params) {
+        Integer id = params[0];
+        SQLiteHelper.Standard standard = db().fetchStandard(id);
+        SQLiteHelper.StandardSteelList results = db().fetchStandardSteel(id);
         Log.i(this.toString(), results.toString());
-        return results;
+        return Pair.create(standard, results);
     }
 }
 
@@ -394,6 +394,7 @@ class SteelDetails implements IDataProvider<PropertyList> {
     public void view(int steel) {
         Log.i("SteelDetails", "view");
         _handler.fetch(steel);
+
     }
 
     @Override
@@ -494,7 +495,7 @@ class StandardSearch implements IDataProvider<SQLiteHelper.StandardList> {
     }
 }
 
-class StandardDetails implements IDataProvider<SQLiteHelper.StandardSteelList> {
+class StandardDetails implements IDataProvider<Pair<SQLiteHelper.Standard, SQLiteHelper.StandardSteelList>> {
     private SQLiteHelper _db;
     private Handler _handler = new Handler();
 
@@ -504,21 +505,21 @@ class StandardDetails implements IDataProvider<SQLiteHelper.StandardSteelList> {
         Register.standardSteelListDataProvider.set(this);
     }
 
-    class Handler implements IDataHandler<StandardSteelList> {
+    class Handler implements IDataHandler<Pair<SQLiteHelper.Standard, SQLiteHelper.StandardSteelList>> {
         FetchStandardSteelTask _task = null;
         @Override
-        public void setData(StandardSteelList data) {
+        public void setData(Pair<SQLiteHelper.Standard, SQLiteHelper.StandardSteelList> data) {
             if (data == null)
                 return;
-            Cache.standardSteelList.put(Register.standard, data);
-            Log.i("STANDARD", "Put Cache" + data.steelNames.size());
+            Cache.standardSteelList.put(Register.standardId, data);
+            Log.i("STANDARD", "Put Cache" + data.second.steelNames.size());
             StandardDetails.this.setData(data);
         }
 
-        public void fetch(SQLiteHelper.Standard standard) {
-            if (Register.standard == standard)
+        public void fetch(Integer standard) {
+            if (Register.standardId == standard)
                 return;
-            Register.standard = standard;
+            Register.standardId = standard;
             if (!Cache.standardSteelList.containsKey(standard)) {
                 _task = new FetchStandardSteelTask(_db, this);
                 _task.execute(standard);
@@ -526,7 +527,7 @@ class StandardDetails implements IDataProvider<SQLiteHelper.StandardSteelList> {
         }
     }
 
-    public void view(SQLiteHelper.Standard standard) {
+    public void view(Integer standard) {
         Log.i("StandardDetails", "view");
         _handler.fetch(standard);
     }
@@ -535,24 +536,24 @@ class StandardDetails implements IDataProvider<SQLiteHelper.StandardSteelList> {
     public void requestData(int size) { }
 
     @Override
-    public StandardSteelList getData() {
-        if (Cache.standardSteelList.containsKey(Register.standard)) {
-            Log.i("STANDARD", "Get Cache" + Cache.standardSteelList.get(Register.standard).steelNames.size());
-            return Cache.standardSteelList.get(Register.standard);
+    public Pair<SQLiteHelper.Standard, SQLiteHelper.StandardSteelList> getData() {
+        if (Cache.standardSteelList.containsKey(Register.standardId)) {
+            Log.i("STANDARD", "Get Cache" + Cache.standardSteelList.get(Register.standardId).second.steelNames.size());
+            return Cache.standardSteelList.get(Register.standardId);
         }
         return null;
     }
 
     @Override
-    public void setData(SQLiteHelper.StandardSteelList data) {
-        IDataRequester<StandardSteelList> requester = Register.standardSteelListDataRequester.get();
+    public void setData(Pair<SQLiteHelper.Standard, SQLiteHelper.StandardSteelList> data) {
+        IDataRequester<Pair<SQLiteHelper.Standard, SQLiteHelper.StandardSteelList>> requester = Register.standardSteelListDataRequester.get();
         if (requester != null)
             requester.dataReady();
     }
 }
 
 interface OnStandardSelectedListener {
-    public void onStandardSelected(SQLiteHelper.Standard standard);
+    public void onStandardSelected(Integer standard);
 }
 interface OnSteelSelectedListener {
     public void onSteelSelected(int steel);
@@ -739,7 +740,7 @@ public class MainActivity extends Activity implements OnSteelSelectedListener, O
     }
 
     @Override
-    public void onStandardSelected(SQLiteHelper.Standard standard) {
+    public void onStandardSelected(Integer standard) {
         Log.i("MainActivity", "onStandardSelected");
         _standardDetails.view(standard);
         _activateFragment(StandardFragment.class.getName(), true);

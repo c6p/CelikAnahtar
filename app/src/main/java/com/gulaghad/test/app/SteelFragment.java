@@ -11,6 +11,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import android.widget.HorizontalScrollView;
 import android.widget.TabHost;
 import android.widget.TabWidget;
@@ -25,24 +26,25 @@ public class SteelFragment extends Fragment {
     private static final String[] _tags = {"info", "composition", "mechanical", "physical", "heat", "standard"};
     private TabChangeListener _listener;
     TabHost tabHost;
+    private OnSteelSelectedListener _steelListener;
+    private OnStandardSelectedListener _standardListener;
+
+    private void centerTabItem(int position) {
+        tabHost.setCurrentTab(position);
+        final TabWidget tabWidget = tabHost.getTabWidget();
+
+        final int screenWidth = tabHost.getWidth();
+        final int leftX = tabWidget.getChildAt(position).getLeft();
+        int newX = 0;
+
+        newX = leftX + (tabWidget.getChildAt(position).getWidth() / 2) - (screenWidth / 2);
+        if (newX < 0) {
+            newX = 0;
+        }
+        ((HorizontalScrollView) tabHost.findViewById(R.id.horScrollView)).scrollTo(newX, 0);
+    }
 
     private class CustomGestureDetector extends GestureDetector.SimpleOnGestureListener {
-
-        public void centerTabItem(int position) {
-            tabHost.setCurrentTab(position);
-            final TabWidget tabWidget = tabHost.getTabWidget();
-
-            final int screenWidth = tabHost.getWidth();
-            final int leftX = tabWidget.getChildAt(position).getLeft();
-            int newX = 0;
-
-            newX = leftX + (tabWidget.getChildAt(position).getWidth() / 2) - (screenWidth / 2);
-            if (newX < 0) {
-                newX = 0;
-            }
-            ((HorizontalScrollView) tabHost.findViewById(R.id.horScrollView)).scrollTo(newX, 0);
-        }
-
         @Override
         public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
             ;
@@ -53,12 +55,12 @@ public class SteelFragment extends Fragment {
                 try { // right to left swipe .. go to next page
                     if (e1.getX() - e2.getX() > 100 && Math.abs(velocityX) > 800) {
                         tabHost.setCurrentTab(++tab);
-                        centerTabItem(tab);
+                        SteelFragment.this.centerTabItem(tab);
                         return true;
                     } //left to right swipe .. go to prev page
                     else if (e2.getX() - e1.getX() > 100 && Math.abs(velocityX) > 800) {
                         tabHost.setCurrentTab(--tab);
-                        centerTabItem(tab);
+                        SteelFragment.this.centerTabItem(tab);
                         return true;
                     }
                 } catch (Exception e) { // nothing
@@ -81,6 +83,7 @@ public class SteelFragment extends Fragment {
                 + "td.value { white-space:nowrap; }"
                 + "span.unit { font-size:80%; color:#ccc; }"
                 + ".centered { position:absolute; text-align:center; top:40%; width:95% }"
+                + "a { color:lightblue; }"
                 + "</style>";
         private final String _loading = "<h3 class='centered'>Loading...</h3>";
         private final String _noData = "<h3 class='centered'>No Data</h3>";
@@ -282,7 +285,9 @@ public class SteelFragment extends Fragment {
             });
             String html = "<table style='font-size:80%'><tr class='heading'><th>Country</th><th>Symbol</th><th>Standard</th><th>Material Number</th></tr>";
             for (SQLiteHelper.Norm s : standards) {
-                html += String.format("<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>", s.country, s.name, s.standard, s.wsnr);
+                html += String.format("<tr><td>%s</td><td>%s</td><td><a href='standard:%s'>%s</a></td><td>%s</td></tr>",
+                        s.country, s.steel_id == Register.steelId ? s.name : String.format("<a href='steel:%s'>%s</a>", s.steel_id, s.name),
+                        s.standard_id, s.standard, s.wsnr);
             }
             html += "</table>";
             return html;
@@ -347,6 +352,8 @@ public class SteelFragment extends Fragment {
     @Override
     public void onAttach(Activity activity) {
         _listener = new TabChangeListener();
+        _steelListener = (OnSteelSelectedListener) activity;
+        _standardListener = (OnStandardSelectedListener) activity;
         super.onAttach(activity);
     }
 
@@ -362,6 +369,23 @@ public class SteelFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_steel, container, false);
         WebView webView = (WebView) view.findViewById(R.id.webView);
         webView.setBackgroundColor(0);
+        webView.setWebViewClient(new WebViewClient() {
+            public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                if (url.startsWith("standard:")) {
+                    Integer standard = Integer.valueOf(url.split(":")[1]);
+                    Log.i("URL standard:", url);
+                    _standardListener.onStandardSelected(standard);
+                    return true;
+                } else if (url.startsWith("steel:")) {
+                    Integer steel = Integer.valueOf(url.split(":")[1]);
+                    Log.i("URL steel:", url);
+                    centerTabItem(0);
+                    _steelListener.onSteelSelected(steel);
+                    return true;
+                }
+                return true;
+            }
+        });
         webView.setOnTouchListener(new View.OnTouchListener() {
             GestureDetector gestureDetector = new GestureDetector((MainActivity) getActivity(), new CustomGestureDetector());
 

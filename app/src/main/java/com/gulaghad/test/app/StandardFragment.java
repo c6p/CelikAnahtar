@@ -5,6 +5,7 @@ import android.app.Fragment;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
+import android.util.Pair;
 import android.view.GestureDetector;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -26,7 +27,7 @@ import java.util.List;
 
 
 public class StandardFragment extends Fragment
-        implements IDataRequester<SQLiteHelper.StandardSteelList> {
+        implements IDataRequester<Pair<SQLiteHelper.Standard, SQLiteHelper.StandardSteelList>> {
     private OnSteelSelectedListener _steelListener;
     private WebView _webView;
     private ListView _listView;
@@ -62,17 +63,22 @@ public class StandardFragment extends Fragment
     private void renderStandard() {
         if (_webView == null)
             return;
-        _webView.loadDataWithBaseURL(null, html(Register.standard), "text/html", "utf-8", null);
+        IDataProvider<Pair<SQLiteHelper.Standard, SQLiteHelper.StandardSteelList>> provider = Register.standardSteelListDataProvider.get();
+        if (provider == null) return;
+        Pair<SQLiteHelper.Standard, SQLiteHelper.StandardSteelList> datas = provider.getData();
+        if (datas != null)
+            _webView.loadDataWithBaseURL(null, html(datas.first), "text/html", "utf-8", null);
     }
 
     private void loadSteels() {
         if (_listView == null) return;
-        IDataProvider<SQLiteHelper.StandardSteelList> provider = Register.standardSteelListDataProvider.get();
+        IDataProvider<Pair<SQLiteHelper.Standard, SQLiteHelper.StandardSteelList>> provider = Register.standardSteelListDataProvider.get();
         if (provider == null) return;
-        SQLiteHelper.StandardSteelList data = provider.getData();
+        Pair<SQLiteHelper.Standard, SQLiteHelper.StandardSteelList> datas = provider.getData();
         _steels.clear();
         _ids.clear();
-        if (data != null) {
+        if (datas != null) {
+            SQLiteHelper.StandardSteelList data = datas.second;
             assert data.steelNames.size() == data.steelIds.size();
             _steels.addAll(data.steelNames);
             _ids.addAll(data.steelIds);

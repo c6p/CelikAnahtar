@@ -399,7 +399,7 @@ public class SQLiteHelper extends SQLiteAssetHelper {
     }
     private List<Description> fetchInfo(Integer steel_id) {
         List<Description> info = new ArrayList<Description>();
-        String q = "SELECT  nw.wsnrdisplay, GROUP_CONCAT(DISTINCT spv.designation), GROUP_CONCAT(DISTINCT sn.name), sg.detail, nv.standard\n" +
+        String q = "SELECT  nw.wsnrdisplay, REPLACE(GROUP_CONCAT(DISTINCT spv.designation), ',', ', '), REPLACE(GROUP_CONCAT(DISTINCT sn.name), ',', ', '), sg.detail, nv.standard\n" +
                 " FROM steel AS s\n" +
                 " LEFT JOIN steel_propertyvalue AS spv ON s.id_steel == spv.id_steel" +
                 " LEFT JOIN normwsnr AS nw ON s.id_steel == nw.id_steel" +
@@ -618,16 +618,20 @@ public class SQLiteHelper extends SQLiteAssetHelper {
         public final String name;
         public final String standard;
         public final String wsnr;
-        public Norm(String pcountry, String pname, String pstandard, String pwsnr) {
-            country = pcountry;
-            name = pname;
-            standard = pstandard;
-            wsnr = pwsnr;
+        public final Integer steel_id;
+        public final Integer standard_id;
+        public Norm(String country, String name, String standard, String wsnr, Integer steel_id, Integer standard_id) {
+            this.country = country;
+            this.name = name;
+            this.standard = standard;
+            this.wsnr = wsnr;
+            this.steel_id = steel_id;
+            this.standard_id = standard_id;
         }
     }
     private List<Norm> fetchNorms(Integer steel_id) {
         List<Norm> standards = new ArrayList<Norm>();
-        String q = "SELECT sd.id_country, sn.name, nv.prefix, nb.name, nv.date, nv.id_norm, wsnrdisplay"
+        String q = "SELECT sd.id_country, sn.name, nv.prefix, nb.name, nv.date, nv.id_norm, wsnrdisplay, s.id_steel, nv.id_normvariant"
                 + " FROM normwsnr AS n"
                 + " JOIN steel AS s on s.id_steel = n.id_steel"
                 + " JOIN steelname AS sn on s.id_steel = sn.id_steel"
@@ -646,7 +650,7 @@ public class SQLiteHelper extends SQLiteAssetHelper {
                     date = " (" + date + ")";
                 standards.add(new Norm(_countries.get(c.getInt(0)).second, c.getString(1),
                         c.getString(2)+" "+c.getString(3)+date+" ("+_normtypes.get(c.getInt(5))+")",
-                        c.getString(6)));
+                        c.getString(6), c.getInt(7), c.getInt(8)));
             } while (c.moveToNext());
         }
         c.close();
@@ -714,6 +718,17 @@ public class SQLiteHelper extends SQLiteAssetHelper {
             if (this.id > another.id) return 1;
             return 0;
         }
+    }
+
+    public Standard fetchStandard(int id) {
+        String q = "SELECT docid, standard, title FROM norms WHERE docid=?";
+        Cursor c = _db.rawQuery(q, new String[]{Integer.toString(id), });
+        Log.i(LOG, q);
+        Standard standard=null;
+        if (c.moveToFirst())
+            standard = new Standard(c.getInt(0), c.getString(1), c.getString(2));
+        c.close();
+        return standard;
     }
 
     public static class StandardList {
