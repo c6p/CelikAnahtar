@@ -30,3 +30,6 @@ Thumbs.db
 #.idea/workspace.xml - remove # and delete .idea if it better suit your needs.
 .gradle
 build/
+
+# Java fatal error logs
+hs_err_pid*.log
